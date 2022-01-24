@@ -250,6 +250,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   baseImage: {fileID: 2800000, guid: 51a5785c54f22764c87e361a32514494, type: 3}
   populationSize: 1000
+  deltaEMax: 25
 --- !u!4 &2061627997
 Transform:
   m_ObjectHideFlags: 0
