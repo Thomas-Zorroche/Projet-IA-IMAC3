@@ -16,9 +16,12 @@ public class GeneticAlgorithm
 
     float crossoverChance = 1.0f;
     float mutationChance = 100.0f;
+    
+    public List<Color> palette;
 
-    public GeneticAlgorithm(RenderTexture targetRT, int _populationSize)
+    public GeneticAlgorithm(RenderTexture targetRT, int _populationSize, List<Color> colorPalette)
     {
+        palette = colorPalette;
         populationSize = _populationSize;
         pool = new List<Image>();
 
@@ -37,7 +40,8 @@ public class GeneticAlgorithm
         population = new List<Image>();
         for (int i = 0; i < populationSize; i++)
         {
-            population.Add(new Image(nPixels, target));
+            Image image = new Image(nPixels, target, palette);
+            population.Add(image);
         }
     }
 
@@ -50,7 +54,6 @@ public class GeneticAlgorithm
             for (int i = 0; i < n; i++)
                 pool.Add(image);
         }
-        //Debug.Log(pool.Count);
     }
 
     public void Update()
@@ -68,14 +71,18 @@ public class GeneticAlgorithm
             // Crossover
             bool crossover = Random.Range(0.0f, 1.0f) < (1 / crossoverChance);
 
-            var child = crossover ? Crossover(ind1, ind2) : GetBestParent(ind1, ind2);
+            var child = new Image(nPixels, target, palette);
+            if (crossover) child.Crossover(ind1, ind2);
+            else child.SetRandomPixels(palette);
 
             // Mutate
             bool mutate = Random.Range(0.0f, 1.0f) < (1 / mutationChance);
             if (mutate)
             {
-                // Create a random image
-                child = new Image(nPixels, target);
+				// Create a random image
+				//Debug.Log("Mutate !");
+
+				child = new Image(nPixels, target, palette);
             }
 
             newPopulation.Add(child);
@@ -95,7 +102,7 @@ public class GeneticAlgorithm
     public Image Crossover(Image ind1, Image ind2)
     {
         int middleIndex = Random.Range(0, nPixels);
-        Image childImage = new Image(nPixels, target);
+        Image childImage = new Image(nPixels, target, palette);
         for (int i = 0; i < nPixels; i++)
             childImage.SetPixelColor(i, i < middleIndex ? ind1.GetPixel(i) : ind1.GetPixel(i));
 
@@ -111,11 +118,12 @@ public class GeneticAlgorithm
     public Image GetBestImage()
     {
         var best = population[0];
-        foreach (var image in population)
-        {
-            if (image.fitness > best.fitness)
-                best = image;
-        }
-        return best;
+		foreach (var image in population)
+		{
+			if (image.fitness > best.fitness)
+				best = image;
+		}
+
+		return best;
     }
 }

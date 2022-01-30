@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 public class GameManager : MonoBehaviour
@@ -12,58 +13,83 @@ public class GameManager : MonoBehaviour
 
     public float deltaEMax = 40f;
 
+    public int maxNumberOfColor = 6;
+
+    public int sizeRatio = 32; 
+
     private GeneticAlgorithm GA;
-    
-    private RenderTexture gridImage;
+
+    private RenderTexture bestIndividual;
+    private RenderTexture targetIndividual;
 
     private Texture2D bestTexture;
 
+    public RawImage targetImage;
+    public RawImage bestImage;
+
+    public Text fitnessText;
+    public Text iterationText;
+
     private int size;
 
-    private List<Color> dominantColors;
+    int epoch = 0;
+
+    private List<Color> palette = new List<Color>();
+
+
 
     // Start is called before the first frame update
     void Start()
     {
-        size = baseImage.width / 32;
+        size = baseImage.width / sizeRatio;
 
         Debug.Log(size * size + " Pixels");
 
-        gridImage = CreateRenderTexture(size);
-        Graphics.Blit(baseImage, gridImage);
+        targetIndividual = CreateRenderTexture(size);
+        bestIndividual = CreateRenderTexture(size);
+
+        Graphics.Blit(baseImage, targetIndividual);
 
         bestTexture = new Texture2D(size, size);
-        bestTexture.filterMode = FilterMode.Point;
 
-        // Retrieve dominant colors
-        //dominantColors
-        Texture2D textureFiltered = FilterGridImage();
+        Texture2D textureFiltered = FilterRenderTexture(targetIndividual);
+        textureFiltered.Apply();
 
-        Graphics.Blit(textureFiltered, gridImage);
+        Graphics.Blit(textureFiltered, targetIndividual);
+        targetImage.texture = targetIndividual;
 
-        GA = new GeneticAlgorithm(gridImage, populationSize);
+        GA = new GeneticAlgorithm(targetIndividual, populationSize, palette);
     }
 
 
-    // Update is called once per frame
     void Update()
     {
-		// Genetic algorithm step
-		//GA.Update();
+		// Get Best Image
+		Image bestInd = GA.GetBestImage();
+		bestTexture.SetPixels(bestInd.GetColors());
+		bestTexture.Apply();
+        Graphics.Blit(bestTexture, bestIndividual);
+        bestImage.texture = bestIndividual;
 
-		//// Get Best Image
-		//Image bestImage = GA.GetBestImage();
-		////Debug.Log("Fitness: " + bestImage.fitness);
-		//bestTexture.SetPixels(bestImage.GetColors());
-		//bestTexture.Apply();
+
+        iterationText.text = epoch.ToString();
+        fitnessText.text = "fitness : " + (bestInd.fitness * 100).ToString() + "%";
+
+        // Genetic algorithm step
+        GA.Update();
+
+
+        epoch++;
+
 	}
 
-	public Texture2D FilterGridImage()
+    public Texture2D FilterRenderTexture(RenderTexture rt)
 	{
-        Texture2D myTexture = toTexture2D(gridImage);
-        List<Color> palette = new List<Color>();
+        Texture2D myTexture = toTexture2D(rt);
         Color[] pixels = myTexture.GetPixels();
+        palette.Clear();
         List<Vector4> colorsLab = new List<Vector4>();
+
         foreach (Color pix in pixels)
         {
             if (palette.Count == 0)
@@ -71,6 +97,8 @@ public class GameManager : MonoBehaviour
                 palette.Add(pix);
                 continue;
 			}
+            if (palette.Count >= maxNumberOfColor)
+                break;
 
             int paletteSize = palette.Count;
             bool addToPalette = true;
@@ -89,7 +117,7 @@ public class GameManager : MonoBehaviour
             if (addToPalette) palette.Add(pix);
 		}
 
-		Debug.Log(palette.Count);
+		Debug.Log("Palette size : " + palette.Count);
 
 
 		// Show Palette
@@ -131,9 +159,9 @@ public class GameManager : MonoBehaviour
         return closest;
 	}
 
-    public RenderTexture GetGridImage()
+    public RenderTexture GetTargetRender()
     {
-        return gridImage;
+        return targetIndividual;
     }
 
     public Texture2D GetBestTexture()
