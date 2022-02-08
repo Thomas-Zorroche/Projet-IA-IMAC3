@@ -1,6 +1,8 @@
+using SimpleFileBrowser;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
@@ -15,7 +17,7 @@ public class GameManager : MonoBehaviour
 
     public int maxNumberOfColor = 6;
 
-    public int sizeRatio = 32; 
+    public int size = 16; 
 
     private GeneticAlgorithm GA;
 
@@ -30,18 +32,20 @@ public class GameManager : MonoBehaviour
     public Text fitnessText;
     public Text iterationText;
 
-    private int size;
 
     int epoch = 0;
 
+    public bool GeneticAlgorithmIsRunning = false;
+
     private List<Color> palette = new List<Color>();
 
+    public Canvas GACanvas;
+    public Canvas MainMenuCanvas;
 
 
-    // Start is called before the first frame update
-    void Start()
+
+    void InitGeneticAlgorithm()
     {
-        size = baseImage.width / sizeRatio;
 
         Debug.Log(size * size + " Pixels");
 
@@ -64,24 +68,87 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-		// Get Best Image
-		Image bestInd = GA.GetBestImage();
-		bestTexture.SetPixels(bestInd.GetColors());
-		bestTexture.Apply();
-        Graphics.Blit(bestTexture, bestIndividual);
-        bestImage.texture = bestIndividual;
+
+        if (GeneticAlgorithmIsRunning)
+		{
+		    // Get Best Image
+		    Image bestInd = GA.GetBestImage();
+		    bestTexture.SetPixels(bestInd.GetColors());
+		    bestTexture.Apply();
+            Graphics.Blit(bestTexture, bestIndividual);
+            bestImage.texture = bestIndividual;
 
 
-        iterationText.text = epoch.ToString();
-        fitnessText.text = "fitness : " + (bestInd.fitness * 100).ToString() + "%";
+            iterationText.text = epoch.ToString();
+            fitnessText.text = "fitness : " + (bestInd.fitness * 100).ToString() + "%";
 
-        // Genetic algorithm step
-        GA.Update();
+            // Genetic algorithm step
+            GA.Update();
 
 
-        epoch++;
-
+            epoch++;
+		}
 	}
+
+
+    public void OnClickOnDraw()
+	{
+        Debug.Log("click on draw");
+	}
+
+
+ 
+
+    public void OnClickOnUpload()
+    {
+        Debug.Log("click on load");
+
+        FileBrowser.SetFilters(true, new FileBrowser.Filter("Images",".png"));
+
+        FileBrowser.SetDefaultFilter(".jpg");
+
+        FileBrowser.AddQuickLink("Users", "C:\\Users", null);
+
+        // Show a select folder dialog 
+        // onSuccess event: print the selected folder's path
+        // onCancel event: print "Canceled"
+        // Load file/folder: folder, Allow multiple selection: false
+        // Initial path: default (Documents), Initial filename: empty
+        // Title: "Select Folder", Submit button text: "Select"
+        FileBrowser.ShowLoadDialog((paths) => OnUploadSucess(paths),
+                                  () => { Debug.Log("Canceled"); },
+                                  FileBrowser.PickMode.Files);
+
+    }
+
+    public static Texture2D LoadPNG(string filePath)
+    {
+
+        Texture2D tex = null;
+        byte[] fileData;
+
+        if (File.Exists(filePath))
+        {
+            fileData = File.ReadAllBytes(filePath);
+            tex = new Texture2D(2, 2);
+            tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.
+        }
+        return tex;
+    }
+
+    public void OnUploadSucess(string[] paths)
+	{
+        Debug.Log("Selected: " + paths[0]);
+
+        baseImage = LoadPNG(paths[0]);
+
+        InitGeneticAlgorithm();
+
+        GACanvas.gameObject.SetActive(true);
+        MainMenuCanvas.gameObject.SetActive(false);
+        GeneticAlgorithmIsRunning = true;
+    }
+
 
     public Texture2D FilterRenderTexture(RenderTexture rt)
 	{
