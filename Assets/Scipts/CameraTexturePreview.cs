@@ -21,7 +21,7 @@ public class CameraTexturePreview : MonoBehaviour
         var GM = GameObject.FindObjectOfType<GameManager>();
         if (GM)
         {
-            Graphics.Blit(GM.GetTargetRender(), destination);
+            Graphics.Blit(GM.baseImage, destination);
         }
     }
 }

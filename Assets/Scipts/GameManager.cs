@@ -46,6 +46,7 @@ public class GameManager : MonoBehaviour
 
     void InitGeneticAlgorithm()
     {
+        //size = baseImage.width / 32;
 
         Debug.Log(size * size + " Pixels");
 
@@ -103,7 +104,7 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log("click on load");
 
-        FileBrowser.SetFilters(true, new FileBrowser.Filter("Images",".png"));
+        FileBrowser.SetFilters(true, new FileBrowser.Filter("Images",".png", ".jpg"));
 
         FileBrowser.SetDefaultFilter(".jpg");
 
@@ -121,7 +122,12 @@ public class GameManager : MonoBehaviour
 
     }
 
-    public static Texture2D LoadPNG(string filePath)
+    public void TogglePlay()
+	{
+        GeneticAlgorithmIsRunning = !GeneticAlgorithmIsRunning;
+	}
+
+    public static Texture2D LoadPNG(string filePath, int size)
     {
 
         Texture2D tex = null;
@@ -130,7 +136,7 @@ public class GameManager : MonoBehaviour
         if (File.Exists(filePath))
         {
             fileData = File.ReadAllBytes(filePath);
-            tex = new Texture2D(2, 2);
+            tex = new Texture2D(size, size);
             tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.
         }
         return tex;
@@ -140,7 +146,7 @@ public class GameManager : MonoBehaviour
 	{
         Debug.Log("Selected: " + paths[0]);
 
-        baseImage = LoadPNG(paths[0]);
+        baseImage = LoadPNG(paths[0], size);
 
         InitGeneticAlgorithm();
 
