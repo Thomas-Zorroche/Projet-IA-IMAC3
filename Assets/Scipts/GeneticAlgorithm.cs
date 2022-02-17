@@ -13,7 +13,9 @@ public class GeneticAlgorithm
 
     List<Image> population;
 
-    private List<Image> pool;
+    private Image[] pool;
+    private int poolCount;
+    private int poolSize;
 
     float mutationChance = 100.0f;
     
@@ -23,7 +25,9 @@ public class GeneticAlgorithm
     {
         palette = colorPalette;
         populationSize = _populationSize;
-        pool = new List<Image>();
+
+        poolSize = populationSize * 100;
+        pool = new Image[poolSize];
 
         target = new Texture2D(targetRT.width, targetRT.height, TextureFormat.ARGB32, false);
         RenderTexture.active = targetRT;
@@ -49,13 +53,16 @@ public class GeneticAlgorithm
 
     private void BuildPool()
     {
-        pool.Clear();
+        System.Array.Clear(pool, 0, poolCount);
+        poolCount = 0;
+
         foreach (var image in population)
         {
             int n = (int)(image.fitness * 100);
             for (int i = 0; i < n; i++)
             {
-                pool.Add(image);
+                pool[poolCount] = image;
+                poolCount++;
             }
         }
     }
@@ -98,7 +105,7 @@ public class GeneticAlgorithm
 
     private Image WeightedChoice()
     {
-        return pool[Random.Range(0, pool.Count - 1)];
+        return pool[Random.Range(0, poolCount - 1)];
     }
 
     public Image GetBestParent(Image p1, Image p2)

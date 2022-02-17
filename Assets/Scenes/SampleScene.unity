@@ -1826,7 +1826,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15507286a1d81ea44a90b169e987bf2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseImage: {fileID: 2800000, guid: 51a5785c54f22764c87e361a32514494, type: 3}
+  baseImage: {fileID: 2800000, guid: 2eac6298ce9a6f44b8ce11252484d819, type: 3}
   populationSize: 5000
   deltaEMax: 45
   maxNumberOfColor: 4
