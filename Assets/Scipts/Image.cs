@@ -12,15 +12,11 @@ public class Image
 
     Texture2D target;
 
-    Color[] targetColors;
-
-
-    public Image(int _size, Texture2D _target, List<Color> palette, bool setRandomPixel = true, bool computeFitness = true)
+    public Image(int _size, Texture2D _target, List<Color> palette, Color[] targetColors, bool setRandomPixel = true, bool computeFitness = true)
     {
         size = _size;
         target = _target;
         colors = new Color[size];
-        targetColors = target.GetPixels();
 
         if (setRandomPixel)
         {
@@ -29,7 +25,7 @@ public class Image
 
         if (computeFitness)
         {
-            ComputeFitness();
+            ComputeFitness(targetColors);
         }
     }
 
@@ -37,7 +33,6 @@ public class Image
     {
         size = parent.size;
         target = parent.target;
-        targetColors = target.GetPixels();
         colors = new Color[size];
         parent.colors.CopyTo(colors, 0);
     }
@@ -72,7 +67,7 @@ public class Image
 		return colorArray;
 	}
 
-	public void ComputeFitness()
+	public void ComputeFitness(Color[] targetColors)
     {
         fitness = 0.0f;
         Color targetColor;

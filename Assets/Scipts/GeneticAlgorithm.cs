@@ -5,6 +5,7 @@ using UnityEngine;
 public class GeneticAlgorithm
 {
     Texture2D target;
+    private Color[] targetColors;
 
     int nPixels;
 
@@ -31,6 +32,8 @@ public class GeneticAlgorithm
 
         nPixels = target.width * target.width;
 
+        targetColors = target.GetPixels();
+
         CreateRandomPopulation();
     }
 
@@ -39,7 +42,7 @@ public class GeneticAlgorithm
         population = new List<Image>();
         for (int i = 0; i < populationSize; i++)
         {
-            Image image = new Image(nPixels, target, palette);
+            Image image = new Image(nPixels, target, palette, targetColors);
             population.Add(image);
         }
     }
@@ -73,7 +76,7 @@ public class GeneticAlgorithm
             bool mutate = Random.Range(0.0f, 1.0f) < (1 / mutationChance);
             if (mutate)
             {
-				var child = new Image(nPixels, target, palette);
+				var child = new Image(nPixels, target, palette, targetColors);
                 newPopulation.Add(child);
             }
             else
@@ -81,7 +84,7 @@ public class GeneticAlgorithm
                 // Crossover
                 var child = new Image(ind1);
                 child.Crossover(ind2);
-                child.ComputeFitness();
+                child.ComputeFitness(targetColors);
                 newPopulation.Add(child);
             }
 
