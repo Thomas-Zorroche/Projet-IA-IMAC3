@@ -4,8 +4,7 @@ using UnityEngine;
 
 public class Image
 {
-    //private List<Pixel> pixels;
-    private List<Color> colors;
+    private Color[] colors;
 
     private int size;
 
@@ -20,7 +19,7 @@ public class Image
     {
         size = _size;
         target = _target;
-        colors = new List<Color>(size);
+        colors = new Color[size];
         targetColors = target.GetPixels();
 
         if (setRandomPixel)
@@ -39,7 +38,8 @@ public class Image
         size = parent.size;
         target = parent.target;
         targetColors = target.GetPixels();
-        colors = new List<Color>(parent.colors);
+        colors = new Color[size];
+        parent.colors.CopyTo(colors, 0);
     }
 
     public void SetPixelColor(int index, Color color)
@@ -55,7 +55,7 @@ public class Image
 		for (int i = 0; i < size; i++)
 		{
             int colorId = Random.Range(0, palette.Count);
-            colors.Add(palette[colorId]);
+            colors[i] = palette[colorId];
 		}
     }
 
@@ -79,10 +79,9 @@ public class Image
         Color currentColor;
 		for (int i = 0; i < size; i++)
 		{
-            //if (colors[i] == targetColor[i])
             targetColor = targetColors[i];
             currentColor = colors[i];
-            //if (currentColor.r != targetColor.r || currentColor.g != targetColor.g || currentColor.b != targetColor.b)
+
             if (currentColor.r != targetColor.r || currentColor.g != targetColor.g || currentColor.b != targetColor.b)
             {
                 continue;
@@ -96,6 +95,11 @@ public class Image
         fitness = fitness / size;
     }
 
+    public void ComputeFitnessParallel()
+    {
+
+    }
+
     public void Crossover(Image parent)
 	{
         int middleIndex = Random.Range(0, size);
@@ -104,6 +108,12 @@ public class Image
             colors[i] = parent.colors[i];
         }
     }
+
+    // Kernels Ids
+    //readonly int KERNEL_FITNESS;
+
+    // Uniforms Ids
+    //readonly int CS_ID_BUTTERFLY_TEXTURE = Shader.PropertyToID("ButterflyTexture");
 
 
 }

@@ -98,17 +98,6 @@ public class GeneticAlgorithm
         return pool[Random.Range(0, pool.Count - 1)];
     }
 
-    public Image Crossover(Image ind1, Image ind2)
-    {
-        int middleIndex = Random.Range(0, nPixels);
-        Image childImage = new Image(nPixels, target, palette);
-        for (int i = 0; i < nPixels; i++)
-            childImage.SetPixelColor(i, i < middleIndex ? ind1.GetPixel(i) : ind1.GetPixel(i));
-
-        childImage.ComputeFitness();
-        return childImage;
-    }
-
     public Image GetBestParent(Image p1, Image p2)
     {
         return p1.fitness > p2.fitness ? p1 : p2;
