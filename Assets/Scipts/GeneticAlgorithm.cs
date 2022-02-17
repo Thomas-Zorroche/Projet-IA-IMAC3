@@ -14,7 +14,6 @@ public class GeneticAlgorithm
 
     private List<Image> pool;
 
-    float crossoverChance = 1.0f;
     float mutationChance = 100.0f;
     
     public List<Color> palette;
@@ -50,9 +49,11 @@ public class GeneticAlgorithm
         pool.Clear();
         foreach (var image in population)
         {
-            int n = (int)(image.fitness * 1000);
+            int n = (int)(image.fitness * 100);
             for (int i = 0; i < n; i++)
+            {
                 pool.Add(image);
+            }
         }
     }
 
@@ -68,24 +69,22 @@ public class GeneticAlgorithm
             var ind1 = WeightedChoice();
             var ind2 = WeightedChoice();
 
-            // Crossover
-            bool crossover = Random.Range(0.0f, 1.0f) < (1 / crossoverChance);
-
-            var child = new Image(nPixels, target, palette);
-            if (crossover) child.Crossover(ind1, ind2);
-            else child.SetRandomPixels(palette);
-
             // Mutate
             bool mutate = Random.Range(0.0f, 1.0f) < (1 / mutationChance);
             if (mutate)
             {
-				// Create a random image
-				//Debug.Log("Mutate !");
-
-				child = new Image(nPixels, target, palette);
+				var child = new Image(nPixels, target, palette);
+                newPopulation.Add(child);
+            }
+            else
+            {
+                // Crossover
+                var child = new Image(ind1);
+                child.Crossover(ind2);
+                child.ComputeFitness();
+                newPopulation.Add(child);
             }
 
-            newPopulation.Add(child);
             newPopulation.Add(ind1);
             newPopulation.Add(ind2);
         }

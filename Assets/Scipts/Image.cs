@@ -13,12 +13,33 @@ public class Image
 
     Texture2D target;
 
-    public Image(int _size, Texture2D _target, List<Color> palette)
+    Color[] targetColors;
+
+
+    public Image(int _size, Texture2D _target, List<Color> palette, bool setRandomPixel = true, bool computeFitness = true)
     {
         size = _size;
         target = _target;
         colors = new List<Color>(size);
-        SetRandomPixels(palette);
+        targetColors = target.GetPixels();
+
+        if (setRandomPixel)
+        {
+            SetRandomPixels(palette);
+        }
+
+        if (computeFitness)
+        {
+            ComputeFitness();
+        }
+    }
+
+    public Image(Image parent)
+    {
+        size = parent.size;
+        target = parent.target;
+        targetColors = target.GetPixels();
+        colors = new List<Color>(parent.colors);
     }
 
     public void SetPixelColor(int index, Color color)
@@ -36,8 +57,6 @@ public class Image
             int colorId = Random.Range(0, palette.Count);
             colors.Add(palette[colorId]);
 		}
-
-        ComputeFitness();
     }
 
     public Color GetPixel(int index)
@@ -56,24 +75,34 @@ public class Image
 	public void ComputeFitness()
     {
         fitness = 0.0f;
-        Color[] targetColor = target.GetPixels();
+        Color targetColor;
+        Color currentColor;
 		for (int i = 0; i < size; i++)
 		{
-            if (colors[i] == targetColor[i])
+            //if (colors[i] == targetColor[i])
+            targetColor = targetColors[i];
+            currentColor = colors[i];
+            //if (currentColor.r != targetColor.r || currentColor.g != targetColor.g || currentColor.b != targetColor.b)
+            if (currentColor.r != targetColor.r || currentColor.g != targetColor.g || currentColor.b != targetColor.b)
+            {
+                continue;
+            }
+            else
+            {
                 fitness++;
+            }
 		}
 
         fitness = fitness / size;
-
     }
 
-    public void Crossover(Image parent1, Image parent2)
+    public void Crossover(Image parent)
 	{
         int middleIndex = Random.Range(0, size);
-        for (int i = 0; i < size; i++)
-            colors[i] = i > middleIndex ? parent2.colors[i] : parent1.colors[i];
-        ComputeFitness();
-
+        for (int i = middleIndex; i < size; i++)
+        {
+            colors[i] = parent.colors[i];
+        }
     }
 
 

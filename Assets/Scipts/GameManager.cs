@@ -42,6 +42,7 @@ public class GameManager : MonoBehaviour
     public Canvas GACanvas;
     public Canvas MainMenuCanvas;
 
+    float chrono;
 
 
     void InitGeneticAlgorithm()
@@ -64,6 +65,9 @@ public class GameManager : MonoBehaviour
         targetImage.texture = targetIndividual;
 
         GA = new GeneticAlgorithm(targetIndividual, populationSize, palette);
+
+        chrono = 0.0f;
+
     }
 
 
@@ -72,25 +76,41 @@ public class GameManager : MonoBehaviour
 
         if (GeneticAlgorithmIsRunning)
 		{
-		    // Get Best Image
+/*		    // Get Best Image
 		    Image bestInd = GA.GetBestImage();
 		    bestTexture.SetPixels(bestInd.GetColors());
 		    bestTexture.Apply();
             Graphics.Blit(bestTexture, bestIndividual);
             bestImage.texture = bestIndividual;
-
-
-            iterationText.text = epoch.ToString();
-            fitnessText.text = "fitness : " + (bestInd.fitness * 100).ToString() + "%";
+            iterationText.text = epoch.ToString();*/
+            
 
             // Genetic algorithm step
             GA.Update();
-
 
             epoch++;
 		}
 	}
 
+    IEnumerator UpdateTimer()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(5f);
+
+            Debug.Log("UPDATE TIMER");
+
+            // Get Best Image
+            Image bestInd = GA.GetBestImage();
+            bestTexture.SetPixels(bestInd.GetColors());
+            bestTexture.Apply();
+            Graphics.Blit(bestTexture, bestIndividual);
+            bestImage.texture = bestIndividual;
+
+            iterationText.text = epoch.ToString();
+            fitnessText.text = "fitness : " + (bestInd.fitness * 100).ToString() + "%";
+        }
+    }
 
     public void OnClickOnDraw()
 	{
@@ -125,6 +145,8 @@ public class GameManager : MonoBehaviour
     public void TogglePlay()
 	{
         GeneticAlgorithmIsRunning = !GeneticAlgorithmIsRunning;
+
+        Debug.Log(Time.realtimeSinceStartup - chrono);
 	}
 
     public static Texture2D LoadPNG(string filePath, int size)
@@ -153,6 +175,10 @@ public class GameManager : MonoBehaviour
         GACanvas.gameObject.SetActive(true);
         MainMenuCanvas.gameObject.SetActive(false);
         GeneticAlgorithmIsRunning = true;
+
+        Debug.Log("UPLOAD");
+        chrono = Time.realtimeSinceStartup;
+        StartCoroutine(UpdateTimer());
     }
 
 
