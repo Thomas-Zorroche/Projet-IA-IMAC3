@@ -1,5 +1,4 @@
 using SimpleFileBrowser;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -44,8 +43,29 @@ public class GameManager : MonoBehaviour
 
     float chrono;
 
+    public InputField SearchField;
+    public List<Character> CharactersList = new List<Character>();
 
-    void InitGeneticAlgorithm()
+    public GameObject ButtonsLayout;
+
+    public GameObject CharacterNameButtonPrefab;
+
+    public Character CharacterToFind;
+
+	private void Start()
+	{
+        SearchField.onValueChanged.AddListener(delegate { OnSearchTextChanged(); });
+	    Object[] textures = Resources.LoadAll("BaseImages", typeof(Texture2D));
+		foreach (Object texture in textures)
+		{
+            Character character = new Character(texture.name, (Texture2D)texture);
+            CharactersList.Add(character);
+		}
+        CharacterToFind = CharactersList[Random.Range(0, CharactersList.Count)];
+    }
+
+
+	void InitGeneticAlgorithm()
     {
         //size = baseImage.width / 32;
 
@@ -181,6 +201,44 @@ public class GameManager : MonoBehaviour
         StartCoroutine(UpdateTimer());
     }
 
+    public void OnSearchTextChanged()
+	{
+		foreach (Transform item in ButtonsLayout.transform)
+		{
+            Destroy(item.gameObject);
+		}
+        if (SearchField.text != "")
+		{
+            List<Character> filtered = CharactersList.FindAll(e => e.CharacterName.ToLower().Contains(SearchField.text.ToLower()));
+
+            // Sort by search position in character name
+            filtered.Sort((a, b) => 
+                a.CharacterName.ToLower().IndexOf(SearchField.text.ToLower())
+                    .CompareTo(
+                        b.CharacterName.ToLower().IndexOf(SearchField.text.ToLower())
+                    ));
+
+            // create buttons
+            filtered.ForEach(e => {
+				GameObject newButton = Instantiate(CharacterNameButtonPrefab, ButtonsLayout.transform);
+                newButton.GetComponentInChildren<Text>().text = e.CharacterName;
+                newButton.GetComponent<Button>().onClick.AddListener(delegate { OnClickOnSolution(e); });
+            });
+		}
+
+
+	}
+
+    public void OnClickOnSolution(Character character)
+	{
+		Debug.Log("Click on " + character.CharacterName);
+        if ( CharacterToFind == character)
+			Debug.Log("Success");
+		else Debug.Log("Fail");
+
+
+	}
+
 
     public Texture2D FilterRenderTexture(RenderTexture rt)
 	{
@@ -302,7 +360,7 @@ public class GameManager : MonoBehaviour
 		for (int i = 0; i < rgb.Length; i++)
 		{
             if (rgb[i] > .04045f)
-                rgb[i] = (float)Math.Pow((rgb[i] + .055) / 1.055, 2.4);
+                rgb[i] = (float)System.Math.Pow((rgb[i] + .055) / 1.055, 2.4);
             else
                 rgb[i] = rgb[i] / 12.92f;
 		}
@@ -325,7 +383,7 @@ public class GameManager : MonoBehaviour
 		for (int i = 0; i < xyz.Length; i++)
 		{
             if (xyz[i] > .008856f)
-                xyz[i] = (float)Math.Pow(xyz[i], (1.0 / 3.0));
+                xyz[i] = (float)System.Math.Pow(xyz[i], (1.0 / 3.0));
             else
                 xyz[i] = (xyz[i] * 7.787f) + (16.0f / 116.0f);
 		}
@@ -342,4 +400,9 @@ public class GameManager : MonoBehaviour
 	{
         return Vector4.Distance(LabColor1, LabColor2);
 	}
+
+	private void OnDestroy()
+	{
+        SearchField.onValueChanged.RemoveAllListeners();
+    }
 }
