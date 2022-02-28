@@ -25,26 +25,38 @@ public class GameManager : MonoBehaviour
 
     private Texture2D bestTexture;
 
-    public RawImage targetImage;
-    public RawImage bestImage;
-
-    public Text fitnessText;
-    public Text iterationText;
-
-
     int epoch = 0;
 
     public bool GeneticAlgorithmIsRunning = false;
 
     private List<Color> palette = new List<Color>();
 
-    public Canvas GACanvas;
+
+    [Header("Main Loop UI references")]
     public Canvas MainLoopCanvas;
+
+    public RawImage targetImage;
+    public RawImage bestImage;
+
+    public InputField SearchField;
+
+    public Text GameTimer;
+    public Text fitnessText;
+    public Text iterationText;
+
+
+    [Header("Endgame UI references")]
+    public Canvas EndgameCanvas;
+
+    public Text SucessesText;
+    public Text ErrorsText;
+
+    [Header("Other Canvas")]
+    public Canvas GACanvas;
     public Canvas MainMenuCanvas;
 
     float chrono;
 
-    public InputField SearchField;
     public List<Character> CharactersList = new List<Character>();
 
     public GameObject ButtonsLayout;
@@ -52,6 +64,14 @@ public class GameManager : MonoBehaviour
     public GameObject CharacterNameButtonPrefab;
 
     public Character CharacterToFind;
+
+    public float IterationTime = 0.5f;
+
+    public int Sucesses = 0;
+    public int Errors = 0;
+
+    public float RoundDuration = 30f;
+    private float RoundStartTime;
 
 	private void Start()
 	{
@@ -110,20 +130,37 @@ public class GameManager : MonoBehaviour
             Graphics.Blit(bestTexture, bestIndividual);
             bestImage.texture = bestIndividual;
             iterationText.text = epoch.ToString();*/
-            
 
             // Genetic algorithm step
             GA.Update();
 
             epoch++;
 		}
-	}
+
+        int timeLeft = Mathf.FloorToInt(RoundDuration - (Time.realtimeSinceStartup - RoundStartTime));
+        GameTimer.text = timeLeft.ToString();
+
+        if (timeLeft == 0)
+        {
+            GeneticAlgorithmIsRunning = false;
+            Debug.Log("Time Over");
+            Debug.Log("Sucesses: "+ Sucesses);
+            Debug.Log("Errors:" + Errors);
+
+            EndgameCanvas.gameObject.SetActive(true);
+            MainLoopCanvas.gameObject.SetActive(false);
+            SucessesText.text = Sucesses.ToString();
+            ErrorsText.text = Errors.ToString();
+
+        }
+
+    }
 
     IEnumerator UpdateTimer()
     {
         while (true)
         {
-            yield return new WaitForSeconds(5f);
+            yield return new WaitForSeconds(IterationTime);
 
             Debug.Log("UPDATE TIMER");
 
@@ -171,26 +208,33 @@ public class GameManager : MonoBehaviour
 
     public void OnClickOnBeginGame()
 	{
-        CharacterToFind = GetRandomCharacter();
-        baseImage = CharacterToFind.Image;
-
-        InitGeneticAlgorithm();
+        ResetGeneticAlgorithm();
 
         MainLoopCanvas.gameObject.SetActive(true);
         MainMenuCanvas.gameObject.SetActive(false);
+        EndgameCanvas.gameObject.SetActive(false);
 
         GeneticAlgorithmIsRunning = true;
 
         Debug.Log("Begin Game");
+        RoundStartTime = Time.realtimeSinceStartup;
         chrono = Time.realtimeSinceStartup;
         StartCoroutine(UpdateTimer());
+    }
+
+    private void ResetGeneticAlgorithm()
+    {
+        CharacterToFind = GetRandomCharacter();
+        baseImage = CharacterToFind.Image;
+
+        InitGeneticAlgorithm();
     }
 
     public void TogglePlay()
 	{
         GeneticAlgorithmIsRunning = !GeneticAlgorithmIsRunning;
 
-        Debug.Log(Time.realtimeSinceStartup - chrono);
+        //Debug.Log(Time.realtimeSinceStartup - chrono);
 	}
 
     public static Texture2D LoadPNG(string filePath, int size)
@@ -256,12 +300,18 @@ public class GameManager : MonoBehaviour
     public void OnClickOnSolution(Character character)
 	{
 		Debug.Log("Click on " + character.CharacterName);
-        if ( CharacterToFind == character)
-		{
-			Debug.Log("Success");
-            TogglePlay();
-		}
-		else Debug.Log("Fail");
+        if (CharacterToFind == character)
+        {
+            Debug.Log("Success");
+            Sucesses++;
+            ResetGeneticAlgorithm();
+
+        }
+        else
+        {
+            Debug.Log("Fail");
+            Errors++;
+        }
 
 
 	}
