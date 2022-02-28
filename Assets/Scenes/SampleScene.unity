@@ -2370,7 +2370,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -303, y: 361}
+  m_AnchoredPosition: {x: -391, y: 215.4}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1363059823
@@ -3737,25 +3737,26 @@ MonoBehaviour:
   deltaEMax: 45
   maxNumberOfColor: 4
   size: 16
-  GeneticAlgorithmIsRunning: 0
-  GACanvas: {fileID: 1492871384}
+  IterationTime: 0.5
   MainLoopCanvas: {fileID: 2054472105}
-  GameTimer: {fileID: 1363059823}
   targetImage: {fileID: 1464615912}
   bestImage: {fileID: 1564300965}
-  fitnessText: {fileID: 652572622}
-  iterationText: {fileID: 1870672139}
-  MainMenuCanvas: {fileID: 614967331}
-  EndgameCanvas: {fileID: 0}
-  SucessesText: {fileID: 0}
-  ErrorsText: {fileID: 0}
   SearchField: {fileID: 129973627}
+  GameTimer: {fileID: 1363059823}
+  fitnessText: {fileID: 868736413}
+  iterationText: {fileID: 1777431285}
   ButtonsLayout: {fileID: 1803006969}
   CharacterNameButtonPrefab: {fileID: 9077432593019475238, guid: 5bee7e1ff5bf3e3459e00a45986a5aa4, type: 3}
-  IterationTime: 0.5
+  EndgameCanvas: {fileID: 2087630723}
+  SucessesText: {fileID: 1256480297}
+  ErrorsText: {fileID: 513650163}
+  EndgameText: {fileID: 1822467265}
+  GACanvas: {fileID: 1492871384}
+  MainMenuCanvas: {fileID: 614967331}
   Sucesses: 0
   Errors: 0
   RoundDuration: 30
+  MaxErrorBeforeGameOver: 3
 --- !u!4 &2061627997
 Transform:
   m_ObjectHideFlags: 0
@@ -3788,7 +3789,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &2087630721
 MonoBehaviour:
   m_ObjectHideFlags: 0

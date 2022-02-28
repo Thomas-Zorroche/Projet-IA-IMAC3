@@ -8,6 +8,8 @@ using Random = UnityEngine.Random;
 
 public class GameManager : MonoBehaviour
 {
+    [Header("Genetic Algorithm")]
+
     public Texture2D baseImage;
 
     public int populationSize;
@@ -18,18 +20,19 @@ public class GameManager : MonoBehaviour
 
     public int size = 16; 
 
+    int epoch = 0;
+
+    [Tooltip("Duration betweeen two epoch")]
+    public float IterationTime = 0.5f;
+
+    private bool GeneticAlgorithmIsRunning = false;
+
     private GeneticAlgorithm GA;
+    private List<Color> palette = new List<Color>();
 
     private RenderTexture bestIndividual;
     private RenderTexture targetIndividual;
-
     private Texture2D bestTexture;
-
-    int epoch = 0;
-
-    public bool GeneticAlgorithmIsRunning = false;
-
-    private List<Color> palette = new List<Color>();
 
 
     [Header("Main Loop UI references")]
@@ -44,6 +47,9 @@ public class GameManager : MonoBehaviour
     public Text fitnessText;
     public Text iterationText;
 
+    public GameObject ButtonsLayout;
+
+    public GameObject CharacterNameButtonPrefab;
 
     [Header("Endgame UI references")]
     public Canvas EndgameCanvas;
@@ -51,26 +57,24 @@ public class GameManager : MonoBehaviour
     public Text SucessesText;
     public Text ErrorsText;
 
+    public Text EndgameText;
+
     [Header("Other Canvas")]
     public Canvas GACanvas;
     public Canvas MainMenuCanvas;
 
     float chrono;
 
-    public List<Character> CharactersList = new List<Character>();
-
-    public GameObject ButtonsLayout;
-
-    public GameObject CharacterNameButtonPrefab;
-
-    public Character CharacterToFind;
-
-    public float IterationTime = 0.5f;
+    private List<Character> CharactersList = new List<Character>();
+    private Character CharacterToFind;
 
     public int Sucesses = 0;
     public int Errors = 0;
 
+    [Header("Game Variable")]
     public float RoundDuration = 30f;
+    public int MaxErrorBeforeGameOver = 3;
+
     private float RoundStartTime;
 
 	private void Start()
@@ -142,17 +146,24 @@ public class GameManager : MonoBehaviour
 
         if (timeLeft == 0)
         {
-            GeneticAlgorithmIsRunning = false;
-            Debug.Log("Time Over");
-            Debug.Log("Sucesses: "+ Sucesses);
-            Debug.Log("Errors:" + Errors);
-
-            EndgameCanvas.gameObject.SetActive(true);
-            MainLoopCanvas.gameObject.SetActive(false);
-            SucessesText.text = Sucesses.ToString();
-            ErrorsText.text = Errors.ToString();
+            InitEndgameCanvas();
 
         }
+
+    }
+
+    private void InitEndgameCanvas(bool IsGameOver = false)
+	{
+        GeneticAlgorithmIsRunning = false;
+
+        EndgameCanvas.gameObject.SetActive(true);
+        MainLoopCanvas.gameObject.SetActive(false);
+
+        EndgameText.text = IsGameOver ? "Game Over !" : "Time out !";
+        SucessesText.text = "You found " + Sucesses.ToString() + " images";
+        ErrorsText.text = "and made " + Errors.ToString() + " errors";
+
+        SearchField.text = "";
 
     }
 
@@ -162,7 +173,7 @@ public class GameManager : MonoBehaviour
         {
             yield return new WaitForSeconds(IterationTime);
 
-            Debug.Log("UPDATE TIMER");
+            // Debug.Log("UPDATE TIMER");
 
             // Get Best Image
             Image bestInd = GA.GetBestImage();
@@ -210,6 +221,9 @@ public class GameManager : MonoBehaviour
 	{
         ResetGeneticAlgorithm();
 
+        Sucesses = 0;
+        Errors = 0;
+
         MainLoopCanvas.gameObject.SetActive(true);
         MainMenuCanvas.gameObject.SetActive(false);
         EndgameCanvas.gameObject.SetActive(false);
@@ -224,7 +238,9 @@ public class GameManager : MonoBehaviour
 
     private void ResetGeneticAlgorithm()
     {
-        CharacterToFind = GetRandomCharacter();
+        epoch = 0;
+
+		CharacterToFind = GetRandomCharacter();
         baseImage = CharacterToFind.Image;
 
         InitGeneticAlgorithm();
@@ -299,7 +315,7 @@ public class GameManager : MonoBehaviour
 
     public void OnClickOnSolution(Character character)
 	{
-		Debug.Log("Click on " + character.CharacterName);
+		//Debug.Log("Click on " + character.CharacterName);
         if (CharacterToFind == character)
         {
             Debug.Log("Success");
@@ -309,10 +325,12 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("Fail");
+            //Debug.Log("Fail");
             Errors++;
         }
 
+        if (Errors >= 3)
+            InitEndgameCanvas(true);
 
 	}
 
