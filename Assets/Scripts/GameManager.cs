@@ -39,6 +39,7 @@ public class GameManager : MonoBehaviour
     private List<Color> palette = new List<Color>();
 
     public Canvas GACanvas;
+    public Canvas MainLoopCanvas;
     public Canvas MainMenuCanvas;
 
     float chrono;
@@ -61,11 +62,17 @@ public class GameManager : MonoBehaviour
             Character character = new Character(texture.name, (Texture2D)texture);
             CharactersList.Add(character);
 		}
-        CharacterToFind = CharactersList[Random.Range(0, CharactersList.Count)];
+        CharacterToFind = GetRandomCharacter();
+    }
+
+    private Character GetRandomCharacter()
+	{
+        return CharactersList[Random.Range(0, CharactersList.Count)];
+
     }
 
 
-	void InitGeneticAlgorithm()
+    void InitGeneticAlgorithm()
     {
         //size = baseImage.width / 32;
 
@@ -162,6 +169,23 @@ public class GameManager : MonoBehaviour
 
     }
 
+    public void OnClickOnBeginGame()
+	{
+        CharacterToFind = GetRandomCharacter();
+        baseImage = CharacterToFind.Image;
+
+        InitGeneticAlgorithm();
+
+        MainLoopCanvas.gameObject.SetActive(true);
+        MainMenuCanvas.gameObject.SetActive(false);
+
+        GeneticAlgorithmIsRunning = true;
+
+        Debug.Log("Begin Game");
+        chrono = Time.realtimeSinceStartup;
+        StartCoroutine(UpdateTimer());
+    }
+
     public void TogglePlay()
 	{
         GeneticAlgorithmIsRunning = !GeneticAlgorithmIsRunning;
@@ -233,7 +257,10 @@ public class GameManager : MonoBehaviour
 	{
 		Debug.Log("Click on " + character.CharacterName);
         if ( CharacterToFind == character)
+		{
 			Debug.Log("Success");
+            TogglePlay();
+		}
 		else Debug.Log("Fail");
 
 
