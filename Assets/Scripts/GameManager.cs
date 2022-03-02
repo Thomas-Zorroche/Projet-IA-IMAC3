@@ -65,9 +65,6 @@ public class GameManager : MonoBehaviour
 
     float chrono;
 
-    private List<Character> CharactersList = new List<Character>();
-    private Character CharacterToFind;
-
     public int Sucesses = 0;
     public int Errors = 0;
 
@@ -75,11 +72,19 @@ public class GameManager : MonoBehaviour
     public float RoundDuration = 30f;
     public int MaxErrorBeforeGameOver = 3;
 
+    private List<Character> CharactersList = new List<Character>();
+    private Character CharacterToFind;
+
     private float RoundStartTime;
+    private bool GameOn = false;
 
 	private void Start()
 	{
+        RGBToLab(new Color(0.5f, 0.2f, 0.5f));
+
         SearchField.onValueChanged.AddListener(delegate { OnSearchTextChanged(); });
+
+        //Initialize Characters List
 	    Object[] textures = Resources.LoadAll("BaseImages", typeof(Texture2D));
 		foreach (Object texture in textures)
 		{
@@ -109,11 +114,11 @@ public class GameManager : MonoBehaviour
 
         bestTexture = new Texture2D(size, size);
 
-        Texture2D textureFiltered = FilterRenderTexture(targetIndividual);
-        textureFiltered.Apply();
+		Texture2D textureFiltered = FilterRenderTexture(targetIndividual);
+		textureFiltered.Apply();
 
-        Graphics.Blit(textureFiltered, targetIndividual);
-        targetImage.texture = targetIndividual;
+		Graphics.Blit(textureFiltered, targetIndividual);
+		targetImage.texture = targetIndividual;
 
         GA = new GeneticAlgorithm(targetIndividual, populationSize, palette);
 
@@ -141,20 +146,22 @@ public class GameManager : MonoBehaviour
             epoch++;
 		}
 
-        int timeLeft = Mathf.FloorToInt(RoundDuration - (Time.realtimeSinceStartup - RoundStartTime));
-        GameTimer.text = timeLeft.ToString();
+        if (GameOn)
+		{
+            int timeLeft = Mathf.FloorToInt(RoundDuration - (Time.realtimeSinceStartup - RoundStartTime));
+            GameTimer.text = timeLeft.ToString();
 
-        if (timeLeft == 0)
-        {
-            InitEndgameCanvas();
+            if (timeLeft == 0)
+                InitEndgameCanvas();
 
-        }
-
+		}
     }
 
     private void InitEndgameCanvas(bool IsGameOver = false)
 	{
         GeneticAlgorithmIsRunning = false;
+
+        GameOn = false;
 
         EndgameCanvas.gameObject.SetActive(true);
         MainLoopCanvas.gameObject.SetActive(false);
@@ -219,6 +226,7 @@ public class GameManager : MonoBehaviour
 
     public void OnClickOnBeginGame()
 	{
+        GameOn = true;
         ResetGeneticAlgorithm();
 
         Sucesses = 0;
@@ -332,7 +340,7 @@ public class GameManager : MonoBehaviour
         if (Errors >= 3)
             InitEndgameCanvas(true);
 
-	}
+    }
 
 
     public Texture2D FilterRenderTexture(RenderTexture rt)
@@ -340,55 +348,195 @@ public class GameManager : MonoBehaviour
         Texture2D myTexture = toTexture2D(rt);
         Color[] pixels = myTexture.GetPixels();
         palette.Clear();
-        List<Vector4> colorsLab = new List<Vector4>();
+        List<Vector3> colorsLab = new List<Vector3>();
 
         foreach (Color pix in pixels)
         {
-            if (palette.Count == 0)
-			{
-                palette.Add(pix);
-                continue;
-			}
-            if (palette.Count >= maxNumberOfColor)
-                break;
+            if (pix.a >= 200) continue;
+            colorsLab.Add(RGBToLab(pix));
+		}
 
-            int paletteSize = palette.Count;
-            bool addToPalette = true;
-			for (int i = 0; i < paletteSize; i++)
-			{
-                var pixLab = RGBToLab(pix);
-                var paletteLab = RGBToLab(palette[i]);
-                var delta = DeltaE(pixLab, paletteLab);
+        int[] clusters = Cluster(colorsLab);
+        List<Color>[] colorClustered = new List<Color>[maxNumberOfColor];
+		for (int i = 0; i < colorClustered.Length; i++)
+            colorClustered[i] = new List<Color>();
 
-				if (delta < deltaEMax)
-				{
-                    addToPalette = false;
-                    break;
-				}
-			}
-            if (addToPalette) palette.Add(pix);
+		for (int i = 0; i < pixels.Length; i++)
+		{
+            int cluster = clusters[i];
+            colorClustered[cluster].Add(pixels[i]);
+		}
+
+        palette.Capacity = colorClustered.Length;
+		for (int i = 0; i < colorClustered.Length; i++)
+		{
+            palette.Add(means(colorClustered[i]));
 		}
 
 		Debug.Log("Palette size : " + palette.Count);
 
 
+        for (int i = 0; i < pixels.Length; i++)
+        {
+            int cluster = clusters[i];
+            Color color = palette[cluster];
+            int column = i % myTexture.width;
+            int row = i / myTexture.width;
+            //myTexture.SetPixel(column, row, GetClosestColor(palette, myTexture.GetPixel(column, row)));
+            myTexture.SetPixel(column, row, color);
+        }
+        myTexture.Apply();
+
+
 		// Show Palette
 		//for (int i = 0; i < palette.Count; i++)
 		//{
-		//          myTexture.SetPixel(0, i, palette[i]);
+		//	myTexture.SetPixel(0, i, palette[i]);
 		//}
-		//      myTexture.Apply();
+		//myTexture.Apply();
 
-		for (int i = 0; i < myTexture.width; i++)
+		//for (int i = 0; i < myTexture.width; i++)
+		//{
+		//	for (int j = 0; j < myTexture.height; j++)
+		//	{
+		//		myTexture.SetPixel(i, j, GetClosestColor(palette, myTexture.GetPixel(i, j)));
+		//	}
+		//}
+		//myTexture.Apply();
+
+		return myTexture;
+    }
+
+    Color means(List<Color> colors)
+	{
+        Vector4 sum = new Vector4();
+
+		foreach (var color in colors)
 		{
-		    for (int j = 0; j < myTexture.height; j++)
-			{
-                myTexture.SetPixel(i, j, GetClosestColor(palette, myTexture.GetPixel(i, j)));
-			}
+            sum += new Vector4(color.r, color.g, color.b, color.a);
 		}
-        myTexture.Apply();
 
-        return myTexture;
+        sum /= colors.Count;
+
+        return new Color(sum.x, sum.y, sum.z, sum.w);
+	}
+
+    int[] Cluster(List<Vector3> colors)
+	{
+        //List<Vector3> data = Normalized(colors);
+        List<Vector3> data = colors;
+        bool changed = true; bool success = true;
+        int numClusters = maxNumberOfColor;
+
+        int[] clustering = InitClustering(data.Count, numClusters);
+        Vector3[] means = new Vector3[numClusters];
+        int maxCount = data.Count * 10;
+        int ct = 0;
+        while (changed == true && success == true && ct < maxCount)
+        {
+            ++ct;
+            success = UpdateMeans(data, clustering, ref means);
+            changed = UpdateClustering(data, ref clustering, means);
+        }
+        return clustering;
+    }
+
+    List<Vector3> Normalized(List<Vector3> data)
+	{
+        List<Vector3> returnValue = new List<Vector3>();
+		foreach (Vector3 vector in data)
+		{
+            returnValue.Add(vector.normalized);
+		}
+        return returnValue;
+	}
+
+    private bool UpdateMeans(List<Vector3> data, int[] clustering, ref Vector3[] means)
+    {
+        // Check if a cluster point has no points
+        int numClusters = means.Length;
+        int[] clusterCounts = new int[numClusters];
+        for (int i = 0; i < data.Count; ++i)
+        {
+            int cluster = clustering[i];
+            ++clusterCounts[cluster];
+        }
+
+        for (int k = 0; k < numClusters; ++k)
+            if (clusterCounts[k] == 0)
+                return false;
+
+        // Calculate means
+        for (int i = 0; i < means.Length; ++i)
+            means[i] = new Vector3();
+
+        for (int i = 0; i < data.Count; ++i)
+        {
+            int cluster = clustering[i];
+            means[cluster] += data[i];
+        }
+
+        for (int i = 0; i < means.Length; ++i)
+                means[i] /= clusterCounts[i];
+
+        return true;
+    }
+
+
+    private bool UpdateClustering(List<Vector3> data, ref int[] clustering, Vector3[] means)
+    {
+        int numClusters = means.Length;
+        bool changed = false;
+
+        int[] newClustering = clustering;
+
+        float[] distances = new float[numClusters];
+
+        for (int i = 0; i < data.Count; ++i)
+        {
+            int newClusterID = 0;
+            for (int k = 0; k < numClusters; ++k)
+			{
+                distances[k] = Vector3.Distance(data[i], means[k]);
+                if (distances[k] < distances[newClusterID])
+                    newClusterID = k;
+			}
+
+            if (newClusterID != newClustering[i])
+            {
+                changed = true;
+                newClustering[i] = newClusterID;
+            }
+        }
+
+        if (changed == false)
+            return false;
+
+        int[] clusterCounts = new int[numClusters];
+        for (int i = 0; i < data.Count; ++i)
+        {
+            int cluster = newClustering[i];
+            ++clusterCounts[cluster];
+        }
+
+        for (int k = 0; k < numClusters; ++k)
+            if (clusterCounts[k] == 0)
+                return false;
+
+		clustering = newClustering;
+        return true; // no zero-counts and at least one change
+    }
+
+    private int[] InitClustering(int numVectors, int numClusters)
+    {
+        int[] clustering = new int[numVectors];
+
+        for (int i = 0; i < numClusters; ++i)
+            clustering[i] = i;
+
+        for (int i = numClusters; i < clustering.Length; ++i)
+            clustering[i] = Random.Range(0, numClusters);
+        return clustering;
     }
 
     public Color GetClosestColor(List<Color> palette, Color color)
@@ -488,7 +636,8 @@ public class GameManager : MonoBehaviour
         lab[1] = 500.0f * (xyz[0] - xyz[1]);
         lab[2] = 200.0f * (xyz[1] - xyz[2]);
 
-        return new Vector4(lab[0], lab[1], lab[2], color.a);
+
+		return new Vector4(lab[0], lab[1], lab[2], color.a);
     }
 
     public static float DeltaE(Vector4 LabColor1, Vector4 LabColor2)

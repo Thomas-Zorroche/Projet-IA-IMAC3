@@ -76,8 +76,10 @@ public class Image
 		{
             targetColor = targetColors[i];
             currentColor = colors[i];
-
-            if (currentColor.r != targetColor.r || currentColor.g != targetColor.g || currentColor.b != targetColor.b)
+            float epsilon = 0.01f;
+            if (Mathf.Abs(currentColor.r - targetColor.r) < epsilon
+                || Mathf.Abs(currentColor.g - targetColor.g) < epsilon 
+                || Mathf.Abs(currentColor.b - targetColor.b) < epsilon)
             {
                 continue;
             }
