@@ -327,9 +327,11 @@ public class GameManager : MonoBehaviour
 
     private void SubmitSearchInput()
 	{
+        if (!Input.GetKeyDown(KeyCode.Return)) return;
+
         if (ButtonsLayout.transform.childCount > 0)
 		{
-            Button FirstButton = ButtonsLayout.transform.GetChild(0).GetComponent<Button>();
+			Button FirstButton = ButtonsLayout.transform.GetChild(0).GetComponent<Button>();
             FirstButton.onClick.Invoke();
 
             SearchField.text = "";
