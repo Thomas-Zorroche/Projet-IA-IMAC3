@@ -133,6 +133,9 @@ public class GameManager : MonoBehaviour
     void Update()
     {
 
+		if (Input.GetKeyDown(KeyCode.Escape))
+            Application.Quit();
+
         if (GeneticAlgorithmIsRunning)
 		{
 /*		    // Get Best Image
@@ -330,20 +333,10 @@ public class GameManager : MonoBehaviour
         if (!Input.GetKeyDown(KeyCode.Return)) return;
 
         if (ButtonsLayout.transform.childCount > 0)
-		{
-			Button FirstButton = ButtonsLayout.transform.GetChild(0).GetComponent<Button>();
+        {
+            Button FirstButton = ButtonsLayout.transform.GetChild(0).GetComponent<Button>();
             FirstButton.onClick.Invoke();
-
-            SearchField.text = "";
-		}
-
-		if (!SearchField.isFocused)
-		{        
-            SearchField.Select();
-            SearchField.ActivateInputField();
-
-		}
-
+        }
     }
 
 	public void OnClickOnSolution(Character character)
@@ -353,6 +346,13 @@ public class GameManager : MonoBehaviour
         {
             Sucesses++;
             StartCoroutine(ShowTarget());
+
+            SearchField.text = "";
+            if (!SearchField.isFocused)
+            {
+                SearchField.Select();
+                SearchField.ActivateInputField();
+            }
         }
         else
             Errors++;
