@@ -18,7 +18,9 @@ public class GameManager : MonoBehaviour
 
     public int maxNumberOfColor = 6;
 
-    public int size = 16; 
+    public int size = 16;
+
+    public int ClusteringSeed = 0;
 
     int epoch = 0;
 
@@ -80,8 +82,6 @@ public class GameManager : MonoBehaviour
 
 	private void Start()
 	{
-        RGBToLab(new Color(0.5f, 0.2f, 0.5f));
-
         SearchField.onValueChanged.AddListener(delegate { OnSearchTextChanged(); });
 
         //Initialize Characters List
@@ -96,7 +96,7 @@ public class GameManager : MonoBehaviour
 
     private Character GetRandomCharacter()
 	{
-        return CharactersList[Random.Range(0, CharactersList.Count)];
+        return CharactersList[Random.Range(0, CharactersList.Count)];        
 
     }
 
@@ -105,7 +105,7 @@ public class GameManager : MonoBehaviour
     {
         //size = baseImage.width / 32;
 
-        Debug.Log(size * size + " Pixels");
+        //Debug.Log(size * size + " Pixels");
 
         targetIndividual = CreateRenderTexture(size);
         bestIndividual = CreateRenderTexture(size);
@@ -238,7 +238,6 @@ public class GameManager : MonoBehaviour
 
         GeneticAlgorithmIsRunning = true;
 
-        Debug.Log("Begin Game");
         RoundStartTime = Time.realtimeSinceStartup;
         chrono = Time.realtimeSinceStartup;
         StartCoroutine(UpdateTimer());
@@ -326,16 +325,11 @@ public class GameManager : MonoBehaviour
 		//Debug.Log("Click on " + character.CharacterName);
         if (CharacterToFind == character)
         {
-            Debug.Log("Success");
             Sucesses++;
             ResetGeneticAlgorithm();
-
         }
         else
-        {
-            //Debug.Log("Fail");
             Errors++;
-        }
 
         if (Errors >= 3)
             InitEndgameCanvas(true);
@@ -365,21 +359,29 @@ public class GameManager : MonoBehaviour
 		{
             int cluster = clusters[i];
             colorClustered[cluster].Add(pixels[i]);
-		}
+
+        }
 
         palette.Capacity = colorClustered.Length;
 		for (int i = 0; i < colorClustered.Length; i++)
 		{
-            palette.Add(means(colorClustered[i]));
+            Color meanColor = Average(colorClustered[i]);
+            if (!float.IsNaN(meanColor.r)) palette.Add(meanColor);
+			else Debug.LogWarning("ONE COLOR FROM THE PALETTE WAS PROBLEMATIC");
+
 		}
 
-		Debug.Log("Palette size : " + palette.Count);
+		//foreach (var item in palette)
+		//{
+		//	Debug.Log(item);
+		//}
 
 
         for (int i = 0; i < pixels.Length; i++)
         {
             int cluster = clusters[i];
             Color color = palette[cluster];
+            color.a = 1;
             int column = i % myTexture.width;
             int row = i / myTexture.width;
             //myTexture.SetPixel(column, row, GetClosestColor(palette, myTexture.GetPixel(column, row)));
@@ -388,37 +390,22 @@ public class GameManager : MonoBehaviour
         myTexture.Apply();
 
 
-		// Show Palette
-		//for (int i = 0; i < palette.Count; i++)
-		//{
-		//	myTexture.SetPixel(0, i, palette[i]);
-		//}
-		//myTexture.Apply();
-
-		//for (int i = 0; i < myTexture.width; i++)
-		//{
-		//	for (int j = 0; j < myTexture.height; j++)
-		//	{
-		//		myTexture.SetPixel(i, j, GetClosestColor(palette, myTexture.GetPixel(i, j)));
-		//	}
-		//}
-		//myTexture.Apply();
-
 		return myTexture;
     }
 
-    Color means(List<Color> colors)
+    Color Average(List<Color> colors)
 	{
+
         Vector4 sum = new Vector4();
 
 		foreach (var color in colors)
 		{
-            sum += new Vector4(color.r, color.g, color.b, color.a);
+            sum += new Vector4(color.r * color.r, color.g * color.g, color.b * color.b, color.a * color.a);
 		}
 
         sum /= colors.Count;
 
-        return new Color(sum.x, sum.y, sum.z, sum.w);
+        return new Color(Mathf.Sqrt(sum.x), Mathf.Sqrt(sum.y), Mathf.Sqrt(sum.z), Mathf.Sqrt(sum.w));
 	}
 
     int[] Cluster(List<Vector3> colors)
@@ -428,7 +415,7 @@ public class GameManager : MonoBehaviour
         bool changed = true; bool success = true;
         int numClusters = maxNumberOfColor;
 
-        int[] clustering = InitClustering(data.Count, numClusters);
+        int[] clustering = InitClustering(data, numClusters);
         Vector3[] means = new Vector3[numClusters];
         int maxCount = data.Count * 10;
         int ct = 0;
@@ -437,37 +424,57 @@ public class GameManager : MonoBehaviour
             ++ct;
             success = UpdateMeans(data, clustering, ref means);
             changed = UpdateClustering(data, ref clustering, means);
+
+            // Check if a cluster point has no points
+            int[] clusterCounts = new int[numClusters];
+            for (int i = 0; i < data.Count; ++i)
+            {
+                int cluster = clustering[i];
+                ++clusterCounts[cluster];
+            }
+
+            for (int k = 0; k < numClusters; ++k)
+			{
+                if (clusterCounts[k] == 0)
+                {
+                    means[k] = new Vector3(Random.Range(0f, 100f), means[k].y, means[k].z);
+
+                    changed = UpdateClustering(data, ref clustering, means);
+                }
+            }
+
         }
-        return clustering;
+
+		return clustering;
     }
 
-    List<Vector3> Normalized(List<Vector3> data)
-	{
-        List<Vector3> returnValue = new List<Vector3>();
-		foreach (Vector3 vector in data)
-		{
-            returnValue.Add(vector.normalized);
-		}
-        return returnValue;
-	}
+ //   List<Vector3> Normalized(List<Vector3> data)
+	//{
+ //       List<Vector3> returnValue = new List<Vector3>();
+	//	foreach (Vector3 vector in data)
+	//	{
+ //           returnValue.Add(vector.normalized);
+	//	}
+ //       return returnValue;
+	//}
 
     private bool UpdateMeans(List<Vector3> data, int[] clustering, ref Vector3[] means)
     {
         // Check if a cluster point has no points
         int numClusters = means.Length;
-        int[] clusterCounts = new int[numClusters];
-        for (int i = 0; i < data.Count; ++i)
-        {
-            int cluster = clustering[i];
-            ++clusterCounts[cluster];
-        }
+		int[] clusterCounts = new int[numClusters];
+		for (int i = 0; i < data.Count; ++i)
+		{
+			int cluster = clustering[i];
+			++clusterCounts[cluster];
+		}
 
-        for (int k = 0; k < numClusters; ++k)
-            if (clusterCounts[k] == 0)
-                return false;
+		//for (int k = 0; k < numClusters; ++k)
+		//    if (clusterCounts[k] == 0)
+		//        return false;
 
-        // Calculate means
-        for (int i = 0; i < means.Length; ++i)
+		// Calculate means
+		for (int i = 0; i < means.Length; ++i)
             means[i] = new Vector3();
 
         for (int i = 0; i < data.Count; ++i)
@@ -498,7 +505,7 @@ public class GameManager : MonoBehaviour
             for (int k = 0; k < numClusters; ++k)
 			{
                 distances[k] = Vector3.Distance(data[i], means[k]);
-                if (distances[k] < distances[newClusterID])
+                if (distances[k] <= distances[newClusterID])
                     newClusterID = k;
 			}
 
@@ -512,24 +519,25 @@ public class GameManager : MonoBehaviour
         if (changed == false)
             return false;
 
-        int[] clusterCounts = new int[numClusters];
-        for (int i = 0; i < data.Count; ++i)
-        {
-            int cluster = newClustering[i];
-            ++clusterCounts[cluster];
-        }
+		//      int[] clusterCounts = new int[numClusters];
+		//      for (int i = 0; i < data.Count; ++i)
+		//      {
+		//          int cluster = newClustering[i];
+		//          ++clusterCounts[cluster];
+		//      }
 
-        for (int k = 0; k < numClusters; ++k)
-            if (clusterCounts[k] == 0)
-                return false;
+		//      for (int k = 0; k < numClusters; ++k)
+		//          if (clusterCounts[k] == 0)
+		//              return false;
 
 		clustering = newClustering;
-        return true; // no zero-counts and at least one change
-    }
+		return true; // no zero-counts and at least one change
+	}
 
-    private int[] InitClustering(int numVectors, int numClusters)
+    private int[] InitClustering(List<Vector3> data, int numClusters)
     {
-        int[] clustering = new int[numVectors];
+        Random.InitState(ClusteringSeed);
+        int[] clustering = new int[data.Count];
 
         for (int i = 0; i < numClusters; ++i)
             clustering[i] = i;
@@ -539,35 +547,35 @@ public class GameManager : MonoBehaviour
         return clustering;
     }
 
-    public Color GetClosestColor(List<Color> palette, Color color)
-	{
-        Color closest = palette[0];
-        Vector4 colorLab = RGBToLab(color);
-        float minDelta = DeltaE(colorLab, RGBToLab(palette[0]));
+	//   public Color GetClosestColor(List<Color> palette, Color color)
+	//{
+	//       Color closest = palette[0];
+	//       Vector4 colorLab = RGBToLab(color);
+	//       float minDelta = DeltaE(colorLab, RGBToLab(palette[0]));
 
-        for (int i = 1; i < palette.Count; i++)
-		{
-            var paletteLab = RGBToLab(palette[i]);
-            var delta = DeltaE(colorLab, paletteLab);
+	//       for (int i = 1; i < palette.Count; i++)
+	//	{
+	//           var paletteLab = RGBToLab(palette[i]);
+	//           var delta = DeltaE(colorLab, paletteLab);
 
-            if (minDelta > delta)
-            {
-                minDelta = delta;
-                closest = palette[i];
-            }
-        }
-        return closest;
-	}
+	//           if (minDelta > delta)
+	//           {
+	//               minDelta = delta;
+	//               closest = palette[i];
+	//           }
+	//       }
+	//       return closest;
+	//}
 
-    public RenderTexture GetTargetRender()
-    {
-        return targetIndividual;
-    }
+	//public RenderTexture GetTargetRender()
+ //   {
+ //       return targetIndividual;
+ //   }
 
-    public Texture2D GetBestTexture()
-    {
-        return bestTexture;
-    }
+ //   public Texture2D GetBestTexture()
+ //   {
+ //       return bestTexture;
+ //   }
 
     public static RenderTexture CreateRenderTexture(int size, RenderTextureFormat format = RenderTextureFormat.ARGB32, bool useMips = false)
     {
@@ -583,6 +591,7 @@ public class GameManager : MonoBehaviour
 
         return rt;
     }
+
     static public Texture2D toTexture2D( RenderTexture rTex)
     {
         Texture2D tex = new Texture2D(rTex.width, rTex.height, TextureFormat.RGB24, false);
@@ -593,7 +602,7 @@ public class GameManager : MonoBehaviour
         return tex;
     }
 
-    public static Vector4 RGBToLab(Color color)
+    public static Vector3 RGBToLab(Color color)
     {
         float[] xyz = new float[3];
         float[] lab = new float[3];
@@ -637,13 +646,13 @@ public class GameManager : MonoBehaviour
         lab[2] = 200.0f * (xyz[1] - xyz[2]);
 
 
-		return new Vector4(lab[0], lab[1], lab[2], color.a);
+		return new Vector3(lab[0], lab[1], lab[2]);
     }
 
-    public static float DeltaE(Vector4 LabColor1, Vector4 LabColor2)
-	{
-        return Vector4.Distance(LabColor1, LabColor2);
-	}
+ //   public static float DeltaE(Vector4 LabColor1, Vector4 LabColor2)
+	//{
+ //       return Vector4.Distance(LabColor1, LabColor2);
+	//}
 
 	private void OnDestroy()
 	{
