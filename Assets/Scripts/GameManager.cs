@@ -92,6 +92,7 @@ public class GameManager : MonoBehaviour
             CharactersList.Add(character);
 		}
         CharacterToFind = GetRandomCharacter();
+        
     }
 
     private Character GetRandomCharacter()
@@ -249,8 +250,10 @@ public class GameManager : MonoBehaviour
 
 		CharacterToFind = GetRandomCharacter();
         baseImage = CharacterToFind.Image;
+		Debug.Log(CharacterToFind.CharacterName);
 
-        InitGeneticAlgorithm();
+
+		InitGeneticAlgorithm();
     }
 
     public void TogglePlay()
@@ -346,7 +349,6 @@ public class GameManager : MonoBehaviour
 
         foreach (Color pix in pixels)
         {
-            if (pix.a >= 200) continue;
             colorsLab.Add(RGBToLab(pix));
 		}
 
@@ -381,7 +383,7 @@ public class GameManager : MonoBehaviour
         {
             int cluster = clusters[i];
             Color color = palette[cluster];
-            color.a = 1;
+            color.a = 1f;
             int column = i % myTexture.width;
             int row = i / myTexture.width;
             //myTexture.SetPixel(column, row, GetClosestColor(palette, myTexture.GetPixel(column, row)));
@@ -437,9 +439,14 @@ public class GameManager : MonoBehaviour
 			{
                 if (clusterCounts[k] == 0)
                 {
-                    means[k] = new Vector3(Random.Range(0f, 100f), means[k].y, means[k].z);
+                    int ct2 = 0;
+                    do
+                    {
+                        ++ct2;
+                        means[k] = new Vector3(Random.Range(0f, 100f), means[k].y, means[k].z);
+                        changed = UpdateClustering(data, ref clustering, means);
 
-                    changed = UpdateClustering(data, ref clustering, means);
+                    } while (changed == false && ct2 < 50);
                 }
             }
 
