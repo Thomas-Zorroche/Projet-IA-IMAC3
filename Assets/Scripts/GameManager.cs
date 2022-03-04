@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
@@ -83,9 +84,10 @@ public class GameManager : MonoBehaviour
 	private void Start()
 	{
         SearchField.onValueChanged.AddListener(delegate { OnSearchTextChanged(); });
+        SearchField.onEndEdit.AddListener(delegate { SubmitSearchInput(); });
 
         //Initialize Characters List
-	    Object[] textures = Resources.LoadAll("BaseImages", typeof(Texture2D));
+        Object[] textures = Resources.LoadAll("BaseImages", typeof(Texture2D));
 		foreach (Object texture in textures)
 		{
             Character character = new Character(texture.name, (Texture2D)texture);
@@ -323,19 +325,49 @@ public class GameManager : MonoBehaviour
 
 	}
 
-    public void OnClickOnSolution(Character character)
+    private void SubmitSearchInput()
+	{
+        if (ButtonsLayout.transform.childCount > 0)
+		{
+            Button FirstButton = ButtonsLayout.transform.GetChild(0).GetComponent<Button>();
+            FirstButton.onClick.Invoke();
+
+            SearchField.text = "";
+		}
+
+		if (!SearchField.isFocused)
+		{        
+            SearchField.Select();
+            SearchField.ActivateInputField();
+
+		}
+
+    }
+
+	public void OnClickOnSolution(Character character)
 	{
 		//Debug.Log("Click on " + character.CharacterName);
         if (CharacterToFind == character)
         {
             Sucesses++;
-            ResetGeneticAlgorithm();
+            StartCoroutine(ShowTarget());
         }
         else
             Errors++;
 
         if (Errors >= 3)
             InitEndgameCanvas(true);
+
+    }
+
+    private IEnumerator ShowTarget()
+	{
+        targetImage.gameObject.SetActive(true);
+
+        yield return new WaitForSeconds(1);
+
+        targetImage.gameObject.SetActive(false);
+        ResetGeneticAlgorithm();
 
     }
 
@@ -443,10 +475,10 @@ public class GameManager : MonoBehaviour
                     do
                     {
                         ++ct2;
-                        means[k] = new Vector3(Random.Range(0f, 100f), means[k].y, means[k].z);
+                        means[k] = new Vector3(Random.Range(0f, 100f), Random.Range(-128,128), Random.Range(-128,128));
                         changed = UpdateClustering(data, ref clustering, means);
 
-                    } while (changed == false && ct2 < 50);
+                    } while (changed == false && ct2 < maxCount);
                 }
             }
 
