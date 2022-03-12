@@ -100,7 +100,6 @@ public class GameManager : MonoBehaviour
     private Character GetRandomCharacter()
 	{
         return CharactersList[Random.Range(0, CharactersList.Count)];        
-
     }
 
 
@@ -118,7 +117,6 @@ public class GameManager : MonoBehaviour
         bestTexture = new Texture2D(size, size);
 
 		Texture2D textureFiltered = FilterRenderTexture(targetIndividual);
-		textureFiltered.Apply();
 
 		Graphics.Blit(textureFiltered, targetIndividual);
 		targetImage.texture = targetIndividual;
@@ -126,7 +124,6 @@ public class GameManager : MonoBehaviour
         GA = new GeneticAlgorithm(targetIndividual, populationSize, palette);
 
         chrono = 0.0f;
-
     }
 
 
@@ -402,15 +399,15 @@ public class GameManager : MonoBehaviour
 		for (int i = 0; i < colorClustered.Length; i++)
 		{
             Color meanColor = Average(colorClustered[i]);
-            if (!float.IsNaN(meanColor.r)) palette.Add(meanColor);
-			else Debug.LogWarning("ONE COLOR FROM THE PALETTE WAS PROBLEMATIC");
-
+            if (!float.IsNaN(meanColor.r))
+            {
+                palette.Add(meanColor);
+            }
+            else
+            {
+                Debug.LogWarning("ONE COLOR FROM THE PALETTE WAS PROBLEMATIC");
+            }
 		}
-
-		//foreach (var item in palette)
-		//{
-		//	Debug.Log(item);
-		//}
 
 
         for (int i = 0; i < pixels.Length; i++)
@@ -421,12 +418,17 @@ public class GameManager : MonoBehaviour
             int column = i % myTexture.width;
             int row = i / myTexture.width;
             //myTexture.SetPixel(column, row, GetClosestColor(palette, myTexture.GetPixel(column, row)));
+
             myTexture.SetPixel(column, row, color);
+
+            if (palette[cluster].r != myTexture.GetPixel(column, row).r)
+            {
+                palette[cluster] = myTexture.GetPixel(column, row);
+            }
         }
         myTexture.Apply();
 
-
-		return myTexture;
+        return myTexture;
     }
 
     Color Average(List<Color> colors)

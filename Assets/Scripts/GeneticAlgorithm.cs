@@ -35,10 +35,35 @@ public class GeneticAlgorithm
         target.Apply();
 
         nPixels = target.width * target.width;
-
         targetColors = target.GetPixels();
 
+        // Correct colors
+        for (int i = 0; i < targetColors.Length; i++)
+        {
+            if (!palette.Contains(targetColors[i]))
+            {
+                int index = FindNearestColor(i);
+                if (index != -1)
+                {
+                    palette[index] = targetColors[i];
+                }
+            }
+        }
+
+
         CreateRandomPopulation();
+    }
+
+    private int FindNearestColor(int index)
+    {
+        for (int i = 0; i < palette.Count; i++)
+        {
+            if (Mathf.Abs(palette[i].r - targetColors[index].r) < 0.0001f)
+            {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private void CreateRandomPopulation()
