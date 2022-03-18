@@ -15,6 +15,7 @@ public class GeneticAlgorithm
     List<Image> populationB;
 
     private Image[] pool;
+    private int[] nativePool;
     private int poolCount;
     private int poolSize;
 
@@ -31,6 +32,7 @@ public class GeneticAlgorithm
 
         poolSize = populationSize * 100;
         pool = new Image[poolSize];
+        nativePool = new int[poolSize];
 
         target = new Texture2D(targetRT.width, targetRT.height, TextureFormat.ARGB32, false);
         RenderTexture.active = targetRT;
@@ -96,24 +98,28 @@ public class GeneticAlgorithm
 
         if (popA)
         {
-            foreach (var image in populationA)
+            //foreach (var image in populationA)
+            for (int imgIdx = 0; imgIdx < populationA.Count; imgIdx++)
             {
-                int n = (int)(image.fitness * 100);
+                int n = (int)(populationA[imgIdx].fitness * 100);
                 for (int i = 0; i < n; i++)
                 {
-                    pool[poolCount] = image;
+                    //pool[poolCount] = image;
+                    nativePool[poolCount] = imgIdx;
                     poolCount++;
                 }
             }
         }
         else
         {
-            foreach (var image in populationB)
+            //foreach (var image in populationB)
+            for (int imgIdx = 0; imgIdx < populationB.Count; imgIdx++)
             {
-                int n = (int)(image.fitness * 100);
+                int n = (int)(populationB[imgIdx].fitness * 100);
                 for (int i = 0; i < n; i++)
                 {
-                    pool[poolCount] = image;
+                    //pool[poolCount] = image;
+                    nativePool[poolCount] = imgIdx;
                     poolCount++;
                 }
             }
@@ -183,7 +189,14 @@ public class GeneticAlgorithm
 
     private Image WeightedChoice()
     {
-        return pool[Random.Range(0, poolCount - 1)];
+        if (popA)
+        {
+            return populationB[nativePool[Random.Range(0, poolCount - 1)]];
+        }
+        else
+        {
+            return populationA[nativePool[Random.Range(0, poolCount - 1)]];
+        }
     }
 
     public Image GetBestParent(Image p1, Image p2)

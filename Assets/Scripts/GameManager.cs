@@ -81,25 +81,25 @@ public class GameManager : MonoBehaviour
     private float RoundStartTime;
     private bool GameOn = false;
 
-	private void Start()
-	{
+    private void Start()
+    {
         SearchField.onValueChanged.AddListener(delegate { OnSearchTextChanged(); });
         SearchField.onEndEdit.AddListener(delegate { SubmitSearchInput(); });
 
         //Initialize Characters List
         Object[] textures = Resources.LoadAll("BaseImages", typeof(Texture2D));
-		foreach (Object texture in textures)
-		{
+        foreach (Object texture in textures)
+        {
             Character character = new Character(texture.name, (Texture2D)texture);
             CharactersList.Add(character);
-		}
+        }
         CharacterToFind = GetRandomCharacter();
-        
+
     }
 
     private Character GetRandomCharacter()
-	{
-        return CharactersList[Random.Range(0, CharactersList.Count)];        
+    {
+        return CharactersList[Random.Range(0, CharactersList.Count)];
     }
 
 
@@ -116,10 +116,10 @@ public class GameManager : MonoBehaviour
 
         bestTexture = new Texture2D(size, size);
 
-		Texture2D textureFiltered = FilterRenderTexture(targetIndividual);
+        Texture2D textureFiltered = FilterRenderTexture(targetIndividual);
 
-		Graphics.Blit(textureFiltered, targetIndividual);
-		targetImage.texture = targetIndividual;
+        Graphics.Blit(textureFiltered, targetIndividual);
+        targetImage.texture = targetIndividual;
 
         GA = new GeneticAlgorithm(targetIndividual, populationSize, palette);
 
@@ -130,38 +130,38 @@ public class GameManager : MonoBehaviour
     void Update()
     {
 
-		if (Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetKeyDown(KeyCode.Escape))
             Application.Quit();
 
         if (GeneticAlgorithmIsRunning)
-		{
-/*		    // Get Best Image
-		    Image bestInd = GA.GetBestImage();
-		    bestTexture.SetPixels(bestInd.GetColors());
-		    bestTexture.Apply();
-            Graphics.Blit(bestTexture, bestIndividual);
-            bestImage.texture = bestIndividual;
-            iterationText.text = epoch.ToString();*/
+        {
+            /*		    // Get Best Image
+                        Image bestInd = GA.GetBestImage();
+                        bestTexture.SetPixels(bestInd.GetColors());
+                        bestTexture.Apply();
+                        Graphics.Blit(bestTexture, bestIndividual);
+                        bestImage.texture = bestIndividual;
+                        iterationText.text = epoch.ToString();*/
 
             // Genetic algorithm step
             GA.Update(epoch);
 
             epoch++;
-		}
+        }
 
         if (GameOn)
-		{
+        {
             int timeLeft = Mathf.FloorToInt(RoundDuration - (Time.realtimeSinceStartup - RoundStartTime));
             GameTimer.text = timeLeft.ToString();
 
             if (timeLeft == 0)
                 InitEndgameCanvas();
 
-		}
+        }
     }
 
     private void InitEndgameCanvas(bool IsGameOver = false)
-	{
+    {
         GeneticAlgorithmIsRunning = false;
 
         GameOn = false;
@@ -194,22 +194,25 @@ public class GameManager : MonoBehaviour
 
             iterationText.text = epoch.ToString();
             fitnessText.text = "fitness : " + (bestInd.fitness * 100).ToString() + "%";
+
+            if (bestInd.fitness >= 0.65f)
+            {
+                Debug.Log("65 ::::: ");
+                Debug.Log(Time.realtimeSinceStartup - chrono);
+            }
         }
     }
 
     public void OnClickOnDraw()
-	{
+    {
         Debug.Log("click on draw");
-	}
-
-
- 
+    }
 
     public void OnClickOnUpload()
     {
         Debug.Log("click on load");
 
-        FileBrowser.SetFilters(true, new FileBrowser.Filter("Images",".png", ".jpg"));
+        FileBrowser.SetFilters(true, new FileBrowser.Filter("Images", ".png", ".jpg"));
 
         FileBrowser.SetDefaultFilter(".jpg");
 
@@ -228,7 +231,7 @@ public class GameManager : MonoBehaviour
     }
 
     public void OnClickOnBeginGame()
-	{
+    {
         GameOn = true;
         ResetGeneticAlgorithm();
 
@@ -250,20 +253,20 @@ public class GameManager : MonoBehaviour
     {
         epoch = 0;
 
-		CharacterToFind = GetRandomCharacter();
+        CharacterToFind = GetRandomCharacter();
         baseImage = CharacterToFind.Image;
-		Debug.Log(CharacterToFind.CharacterName);
+        Debug.Log(CharacterToFind.CharacterName);
 
 
-		InitGeneticAlgorithm();
+        InitGeneticAlgorithm();
     }
 
     public void TogglePlay()
-	{
+    {
         GeneticAlgorithmIsRunning = !GeneticAlgorithmIsRunning;
 
         //Debug.Log(Time.realtimeSinceStartup - chrono);
-	}
+    }
 
     public static Texture2D LoadPNG(string filePath, int size)
     {
@@ -281,7 +284,7 @@ public class GameManager : MonoBehaviour
     }
 
     public void OnUploadSucess(string[] paths)
-	{
+    {
         Debug.Log("Selected: " + paths[0]);
 
         baseImage = LoadPNG(paths[0], size);
@@ -298,17 +301,17 @@ public class GameManager : MonoBehaviour
     }
 
     public void OnSearchTextChanged()
-	{
-		foreach (Transform item in ButtonsLayout.transform)
-		{
+    {
+        foreach (Transform item in ButtonsLayout.transform)
+        {
             Destroy(item.gameObject);
-		}
+        }
         if (SearchField.text != "")
-		{
+        {
             List<Character> filtered = CharactersList.FindAll(e => e.CharacterName.ToLower().Contains(SearchField.text.ToLower()));
 
             // Sort by search position in character name
-            filtered.Sort((a, b) => 
+            filtered.Sort((a, b) =>
                 a.CharacterName.ToLower().IndexOf(SearchField.text.ToLower())
                     .CompareTo(
                         b.CharacterName.ToLower().IndexOf(SearchField.text.ToLower())
@@ -316,17 +319,17 @@ public class GameManager : MonoBehaviour
 
             // create buttons
             filtered.ForEach(e => {
-				GameObject newButton = Instantiate(CharacterNameButtonPrefab, ButtonsLayout.transform);
+                GameObject newButton = Instantiate(CharacterNameButtonPrefab, ButtonsLayout.transform);
                 newButton.GetComponentInChildren<Text>().text = e.CharacterName;
                 newButton.GetComponent<Button>().onClick.AddListener(delegate { OnClickOnSolution(e); });
             });
-		}
+        }
 
 
-	}
+    }
 
     private void SubmitSearchInput()
-	{
+    {
         if (!Input.GetKeyDown(KeyCode.Return)) return;
 
         if (ButtonsLayout.transform.childCount > 0)
@@ -336,9 +339,9 @@ public class GameManager : MonoBehaviour
         }
     }
 
-	public void OnClickOnSolution(Character character)
-	{
-		//Debug.Log("Click on " + character.CharacterName);
+    public void OnClickOnSolution(Character character)
+    {
+        //Debug.Log("Click on " + character.CharacterName);
         if (CharacterToFind == character)
         {
             Sucesses++;
@@ -360,7 +363,7 @@ public class GameManager : MonoBehaviour
     }
 
     private IEnumerator ShowTarget()
-	{
+    {
         targetImage.gameObject.SetActive(true);
 
         yield return new WaitForSeconds(1);
@@ -372,7 +375,7 @@ public class GameManager : MonoBehaviour
 
 
     public Texture2D FilterRenderTexture(RenderTexture rt)
-	{
+    {
         Texture2D myTexture = toTexture2D(rt);
         Color[] pixels = myTexture.GetPixels();
         palette.Clear();
@@ -381,23 +384,23 @@ public class GameManager : MonoBehaviour
         foreach (Color pix in pixels)
         {
             colorsLab.Add(RGBToLab(pix));
-		}
+        }
 
         int[] clusters = Cluster(colorsLab);
         List<Color>[] colorClustered = new List<Color>[maxNumberOfColor];
-		for (int i = 0; i < colorClustered.Length; i++)
+        for (int i = 0; i < colorClustered.Length; i++)
             colorClustered[i] = new List<Color>();
 
-		for (int i = 0; i < pixels.Length; i++)
-		{
+        for (int i = 0; i < pixels.Length; i++)
+        {
             int cluster = clusters[i];
             colorClustered[cluster].Add(pixels[i]);
 
         }
 
         palette.Capacity = colorClustered.Length;
-		for (int i = 0; i < colorClustered.Length; i++)
-		{
+        for (int i = 0; i < colorClustered.Length; i++)
+        {
             Color meanColor = Average(colorClustered[i]);
             if (!float.IsNaN(meanColor.r))
             {
@@ -407,7 +410,7 @@ public class GameManager : MonoBehaviour
             {
                 Debug.LogWarning("ONE COLOR FROM THE PALETTE WAS PROBLEMATIC");
             }
-		}
+        }
 
 
         for (int i = 0; i < pixels.Length; i++)
@@ -432,22 +435,22 @@ public class GameManager : MonoBehaviour
     }
 
     Color Average(List<Color> colors)
-	{
+    {
 
         Vector4 sum = new Vector4();
 
-		foreach (var color in colors)
-		{
+        foreach (var color in colors)
+        {
             sum += new Vector4(color.r * color.r, color.g * color.g, color.b * color.b, color.a * color.a);
-		}
+        }
 
         sum /= colors.Count;
 
         return new Color(Mathf.Sqrt(sum.x), Mathf.Sqrt(sum.y), Mathf.Sqrt(sum.z), Mathf.Sqrt(sum.w));
-	}
+    }
 
     int[] Cluster(List<Vector3> colors)
-	{
+    {
         //List<Vector3> data = Normalized(colors);
         List<Vector3> data = colors;
         bool changed = true; bool success = true;
@@ -472,14 +475,14 @@ public class GameManager : MonoBehaviour
             }
 
             for (int k = 0; k < numClusters; ++k)
-			{
+            {
                 if (clusterCounts[k] == 0)
                 {
                     int ct2 = 0;
                     do
                     {
                         ++ct2;
-                        means[k] = new Vector3(Random.Range(0f, 100f), Random.Range(-128,128), Random.Range(-128,128));
+                        means[k] = new Vector3(Random.Range(0f, 100f), Random.Range(-128, 128), Random.Range(-128, 128));
                         changed = UpdateClustering(data, ref clustering, means);
 
                     } while (changed == false && ct2 < maxCount);
@@ -488,36 +491,36 @@ public class GameManager : MonoBehaviour
 
         }
 
-		return clustering;
+        return clustering;
     }
 
- //   List<Vector3> Normalized(List<Vector3> data)
-	//{
- //       List<Vector3> returnValue = new List<Vector3>();
-	//	foreach (Vector3 vector in data)
-	//	{
- //           returnValue.Add(vector.normalized);
-	//	}
- //       return returnValue;
-	//}
+    //   List<Vector3> Normalized(List<Vector3> data)
+    //{
+    //       List<Vector3> returnValue = new List<Vector3>();
+    //	foreach (Vector3 vector in data)
+    //	{
+    //           returnValue.Add(vector.normalized);
+    //	}
+    //       return returnValue;
+    //}
 
     private bool UpdateMeans(List<Vector3> data, int[] clustering, ref Vector3[] means)
     {
         // Check if a cluster point has no points
         int numClusters = means.Length;
-		int[] clusterCounts = new int[numClusters];
-		for (int i = 0; i < data.Count; ++i)
-		{
-			int cluster = clustering[i];
-			++clusterCounts[cluster];
-		}
+        int[] clusterCounts = new int[numClusters];
+        for (int i = 0; i < data.Count; ++i)
+        {
+            int cluster = clustering[i];
+            ++clusterCounts[cluster];
+        }
 
-		//for (int k = 0; k < numClusters; ++k)
-		//    if (clusterCounts[k] == 0)
-		//        return false;
+        //for (int k = 0; k < numClusters; ++k)
+        //    if (clusterCounts[k] == 0)
+        //        return false;
 
-		// Calculate means
-		for (int i = 0; i < means.Length; ++i)
+        // Calculate means
+        for (int i = 0; i < means.Length; ++i)
             means[i] = new Vector3();
 
         for (int i = 0; i < data.Count; ++i)
@@ -527,7 +530,7 @@ public class GameManager : MonoBehaviour
         }
 
         for (int i = 0; i < means.Length; ++i)
-                means[i] /= clusterCounts[i];
+            means[i] /= clusterCounts[i];
 
         return true;
     }
@@ -546,11 +549,11 @@ public class GameManager : MonoBehaviour
         {
             int newClusterID = 0;
             for (int k = 0; k < numClusters; ++k)
-			{
+            {
                 distances[k] = Vector3.Distance(data[i], means[k]);
                 if (distances[k] <= distances[newClusterID])
                     newClusterID = k;
-			}
+            }
 
             if (newClusterID != newClustering[i])
             {
@@ -562,20 +565,20 @@ public class GameManager : MonoBehaviour
         if (changed == false)
             return false;
 
-		//      int[] clusterCounts = new int[numClusters];
-		//      for (int i = 0; i < data.Count; ++i)
-		//      {
-		//          int cluster = newClustering[i];
-		//          ++clusterCounts[cluster];
-		//      }
+        //      int[] clusterCounts = new int[numClusters];
+        //      for (int i = 0; i < data.Count; ++i)
+        //      {
+        //          int cluster = newClustering[i];
+        //          ++clusterCounts[cluster];
+        //      }
 
-		//      for (int k = 0; k < numClusters; ++k)
-		//          if (clusterCounts[k] == 0)
-		//              return false;
+        //      for (int k = 0; k < numClusters; ++k)
+        //          if (clusterCounts[k] == 0)
+        //              return false;
 
-		clustering = newClustering;
-		return true; // no zero-counts and at least one change
-	}
+        clustering = newClustering;
+        return true; // no zero-counts and at least one change
+    }
 
     private int[] InitClustering(List<Vector3> data, int numClusters)
     {
@@ -590,35 +593,35 @@ public class GameManager : MonoBehaviour
         return clustering;
     }
 
-	//   public Color GetClosestColor(List<Color> palette, Color color)
-	//{
-	//       Color closest = palette[0];
-	//       Vector4 colorLab = RGBToLab(color);
-	//       float minDelta = DeltaE(colorLab, RGBToLab(palette[0]));
+    //   public Color GetClosestColor(List<Color> palette, Color color)
+    //{
+    //       Color closest = palette[0];
+    //       Vector4 colorLab = RGBToLab(color);
+    //       float minDelta = DeltaE(colorLab, RGBToLab(palette[0]));
 
-	//       for (int i = 1; i < palette.Count; i++)
-	//	{
-	//           var paletteLab = RGBToLab(palette[i]);
-	//           var delta = DeltaE(colorLab, paletteLab);
+    //       for (int i = 1; i < palette.Count; i++)
+    //	{
+    //           var paletteLab = RGBToLab(palette[i]);
+    //           var delta = DeltaE(colorLab, paletteLab);
 
-	//           if (minDelta > delta)
-	//           {
-	//               minDelta = delta;
-	//               closest = palette[i];
-	//           }
-	//       }
-	//       return closest;
-	//}
+    //           if (minDelta > delta)
+    //           {
+    //               minDelta = delta;
+    //               closest = palette[i];
+    //           }
+    //       }
+    //       return closest;
+    //}
 
-	//public RenderTexture GetTargetRender()
- //   {
- //       return targetIndividual;
- //   }
+    //public RenderTexture GetTargetRender()
+    //   {
+    //       return targetIndividual;
+    //   }
 
- //   public Texture2D GetBestTexture()
- //   {
- //       return bestTexture;
- //   }
+    //   public Texture2D GetBestTexture()
+    //   {
+    //       return bestTexture;
+    //   }
 
     public static RenderTexture CreateRenderTexture(int size, RenderTextureFormat format = RenderTextureFormat.ARGB32, bool useMips = false)
     {
@@ -635,7 +638,7 @@ public class GameManager : MonoBehaviour
         return rt;
     }
 
-    static public Texture2D toTexture2D( RenderTexture rTex)
+    static public Texture2D toTexture2D(RenderTexture rTex)
     {
         Texture2D tex = new Texture2D(rTex.width, rTex.height, TextureFormat.RGB24, false);
         // ReadPixels looks at the active RenderTexture.
@@ -649,17 +652,17 @@ public class GameManager : MonoBehaviour
     {
         float[] xyz = new float[3];
         float[] lab = new float[3];
-        float[] rgb = new float[] { color.r, color.g, color.b};
+        float[] rgb = new float[] { color.r, color.g, color.b };
 
         // Convert to C linear
-		for (int i = 0; i < rgb.Length; i++)
-		{
+        for (int i = 0; i < rgb.Length; i++)
+        {
             if (rgb[i] > .04045f)
                 rgb[i] = (float)System.Math.Pow((rgb[i] + .055) / 1.055, 2.4);
             else
                 rgb[i] = rgb[i] / 12.92f;
-		}
-        
+        }
+
         rgb[0] = rgb[0] * 100.0f;
         rgb[1] = rgb[1] * 100.0f;
         rgb[2] = rgb[2] * 100.0f;
@@ -675,13 +678,13 @@ public class GameManager : MonoBehaviour
         xyz[2] = xyz[2] / 108.883f;
 
         // Convert in Lab
-		for (int i = 0; i < xyz.Length; i++)
-		{
+        for (int i = 0; i < xyz.Length; i++)
+        {
             if (xyz[i] > .008856f)
                 xyz[i] = (float)System.Math.Pow(xyz[i], (1.0 / 3.0));
             else
                 xyz[i] = (xyz[i] * 7.787f) + (16.0f / 116.0f);
-		}
+        }
 
 
         lab[0] = (116.0f * xyz[1]) - 16.0f;
@@ -689,16 +692,16 @@ public class GameManager : MonoBehaviour
         lab[2] = 200.0f * (xyz[1] - xyz[2]);
 
 
-		return new Vector3(lab[0], lab[1], lab[2]);
+        return new Vector3(lab[0], lab[1], lab[2]);
     }
 
- //   public static float DeltaE(Vector4 LabColor1, Vector4 LabColor2)
-	//{
- //       return Vector4.Distance(LabColor1, LabColor2);
-	//}
+    //   public static float DeltaE(Vector4 LabColor1, Vector4 LabColor2)
+    //{
+    //       return Vector4.Distance(LabColor1, LabColor2);
+    //}
 
-	private void OnDestroy()
-	{
+    private void OnDestroy()
+    {
         SearchField.onValueChanged.RemoveAllListeners();
     }
 }
