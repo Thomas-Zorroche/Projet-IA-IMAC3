@@ -13,6 +13,8 @@ public class GameManager : MonoBehaviour
 
     public Texture2D baseImage;
 
+    public ComputeShader GAComputreShader;
+
     public int populationSize;
 
     public float deltaEMax = 40f;
@@ -20,6 +22,8 @@ public class GameManager : MonoBehaviour
     public int maxNumberOfColor = 6;
 
     public int size = 16;
+
+    public float mutation;
 
     public int ClusteringSeed = 0;
 
@@ -121,7 +125,7 @@ public class GameManager : MonoBehaviour
         Graphics.Blit(textureFiltered, targetIndividual);
         targetImage.texture = targetIndividual;
 
-        GA = new GeneticAlgorithm(targetIndividual, populationSize, palette);
+        GA = new GeneticAlgorithm(targetIndividual, populationSize, palette, GAComputreShader, mutation);
 
         chrono = 0.0f;
     }

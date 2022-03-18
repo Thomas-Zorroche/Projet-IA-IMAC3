@@ -1,0 +1,17 @@
+#pragma kernel CSMain
+
+RWTexture2D<float4> Target;
+RWTexture2D<float4> Source;
+
+[numthreads(8,8,1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    if (Target[id.xy].r == Source[id.xy].r
+        && Target[id.xy].g == Source[id.xy].g
+        && Target[id.xy].b == Source[id.xy].b)
+    {
+        //InterlockedAdd(, 1);
+    }
+
+    //Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
+}

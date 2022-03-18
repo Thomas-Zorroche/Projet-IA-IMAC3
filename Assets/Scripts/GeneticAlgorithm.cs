@@ -14,25 +14,41 @@ public class GeneticAlgorithm
     List<Image> populationA;
     List<Image> populationB;
 
-    private Image[] pool;
-    private int[] nativePool;
+    private int[] pool;
     private int poolCount;
     private int poolSize;
+    private int poolFactor;
 
-    float mutationChance = 100.0f;
+    float mutationChance;
 
     public List<Color> palette;
 
     private bool popA = true;
 
-    public GeneticAlgorithm(RenderTexture targetRT, int _populationSize, List<Color> colorPalette)
+    private ComputeShader GAComputreShader;
+
+
+    // Compute Shader Variables
+    RenderTexture sourceTextureCS;
+    readonly int KERNEL_FITNESS_ID;
+    readonly int LOCAL_WORK_GROUPS = 8; // 8 x 8 x 1
+    readonly int CS_ID_TARGET_TEXTURE = Shader.PropertyToID("TargetTexture");
+    readonly int CS_ID_SRC_TEXTURE = Shader.PropertyToID("SrcTexture");
+
+
+    public GeneticAlgorithm(RenderTexture targetRT, int _populationSize, List<Color> colorPalette, ComputeShader shader, float mutation)
     {
+        mutationChance = mutation;
+
+        GAComputreShader = shader;
+        //KERNEL_FITNESS_ID = GAComputreShader.FindKernel("ComputeFitness");
+
         palette = colorPalette;
         populationSize = _populationSize;
 
-        poolSize = populationSize * 100;
-        pool = new Image[poolSize];
-        nativePool = new int[poolSize];
+        poolFactor = 100;
+        poolSize = populationSize * poolFactor;
+        pool = new int[poolSize];
 
         target = new Texture2D(targetRT.width, targetRT.height, TextureFormat.ARGB32, false);
         RenderTexture.active = targetRT;
@@ -98,28 +114,24 @@ public class GeneticAlgorithm
 
         if (popA)
         {
-            //foreach (var image in populationA)
             for (int imgIdx = 0; imgIdx < populationA.Count; imgIdx++)
             {
-                int n = (int)(populationA[imgIdx].fitness * 100);
+                int n = (int)(populationA[imgIdx].fitness * poolFactor);
                 for (int i = 0; i < n; i++)
                 {
-                    //pool[poolCount] = image;
-                    nativePool[poolCount] = imgIdx;
+                    pool[poolCount] = imgIdx;
                     poolCount++;
                 }
             }
         }
         else
         {
-            //foreach (var image in populationB)
             for (int imgIdx = 0; imgIdx < populationB.Count; imgIdx++)
             {
-                int n = (int)(populationB[imgIdx].fitness * 100);
+                int n = (int)(populationB[imgIdx].fitness * poolFactor);
                 for (int i = 0; i < n; i++)
                 {
-                    //pool[poolCount] = image;
-                    nativePool[poolCount] = imgIdx;
+                    pool[poolCount] = imgIdx;
                     poolCount++;
                 }
             }
@@ -167,17 +179,13 @@ public class GeneticAlgorithm
                 // Crossover
                 if (popA)
                 {
-                    //population[i + 2] = new Image(population[i]);
                     populationA[i + 2].CopyColors(populationA[i]);
-
                     populationA[i + 2].Crossover(populationA[i + 1]);
                     populationA[i + 2].ComputeFitness(targetColors);
                 }
                 else
                 {
-                    //population[i + 2] = new Image(population[i]);
                     populationB[i + 2].CopyColors(populationB[i]);
-
                     populationB[i + 2].Crossover(populationB[i + 1]);
                     populationB[i + 2].ComputeFitness(targetColors);
                 }
@@ -191,11 +199,11 @@ public class GeneticAlgorithm
     {
         if (popA)
         {
-            return populationB[nativePool[Random.Range(0, poolCount - 1)]];
+            return populationB[pool[Random.Range(0, poolCount - 1)]];
         }
         else
         {
-            return populationA[nativePool[Random.Range(0, poolCount - 1)]];
+            return populationA[pool[Random.Range(0, poolCount - 1)]];
         }
     }
 
@@ -215,4 +223,13 @@ public class GeneticAlgorithm
 
         return best;
     }
+
+    public void ComputeFitnessGPU(Image image)
+    {
+        GAComputreShader.SetTexture(KERNEL_FITNESS_ID, CS_ID_TARGET_TEXTURE, target);
+        GAComputreShader.SetTexture(KERNEL_FITNESS_ID, CS_ID_SRC_TEXTURE, sourceTextureCS);
+        GAComputreShader.Dispatch(KERNEL_FITNESS_ID, nPixels / LOCAL_WORK_GROUPS, nPixels / LOCAL_WORK_GROUPS, 1);
+    }
 }
+
+
