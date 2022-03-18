@@ -4,45 +4,31 @@ using UnityEngine;
 
 public class Image
 {
-    private Color[] colors;
+    public Color[] colors;
 
     private int size;
 
     public float fitness;
 
-    Texture2D target;
-
-    public Image(int _size, Texture2D _target, List<Color> palette, Color[] targetColors, bool setRandomPixel = true, bool computeFitness = true)
+    public Image(int _size)
     {
         size = _size;
-        target = _target;
         colors = new Color[size];
-
-        if (setRandomPixel)
-        {
-            SetRandomPixels(palette);
-        }
-
-        if (computeFitness)
-        {
-            ComputeFitness(targetColors);
-        }
     }
 
     public Image(Image parent)
     {
         size = parent.size;
-        target = parent.target;
         colors = new Color[size];
         parent.colors.CopyTo(colors, 0);
+        //CopyColors(parent);
     }
 
-    public void SetPixelColor(int index, Color color)
+    public void CopyColors(Image parent)
     {
-        if (index < size)
-        {
-            colors[index] = color;
-        }
+        //System.Array.Copy(parent.colors, colors, size);
+        //colors = new Color[size];
+        parent.colors.CopyTo(colors, 0);
     }
 
     public void SetRandomPixels(List<Color> palette)
@@ -87,11 +73,6 @@ public class Image
 		}
 
         fitness = fitness / size;
-    }
-
-    public void ComputeFitnessParallel()
-    {
-
     }
 
     public void Crossover(Image parent)

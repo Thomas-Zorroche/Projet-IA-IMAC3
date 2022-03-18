@@ -144,7 +144,7 @@ public class GameManager : MonoBehaviour
             iterationText.text = epoch.ToString();*/
 
             // Genetic algorithm step
-            GA.Update();
+            GA.Update(epoch);
 
             epoch++;
 		}

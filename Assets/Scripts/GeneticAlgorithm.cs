@@ -50,7 +50,6 @@ public class GeneticAlgorithm
             }
         }
 
-
         CreateRandomPopulation();
     }
 
@@ -71,7 +70,9 @@ public class GeneticAlgorithm
         population = new List<Image>();
         for (int i = 0; i < populationSize; i++)
         {
-            Image image = new Image(nPixels, target, palette, targetColors);
+            Image image = new Image(nPixels);
+            image.SetRandomPixels(palette);
+            image.ComputeFitness(targetColors);
             population.Add(image);
         }
     }
@@ -92,40 +93,36 @@ public class GeneticAlgorithm
         }
     }
 
-    public void Update()
+    public void Update(int epoch)
     {
-        //var weightedPopulation = GetWeightedPopulation();
         BuildPool();
 
-        var newPopulation = new List<Image>();
-        for (int i = 0; i < populationSize / 3; i++)
+        //var newPopulation = new List<Image>();
+        for (int i = 0; i + 2 < populationSize; i+=3)
         {
             // Select two random individuals, based on their fitness probabilites
-            var ind1 = WeightedChoice();
-            var ind2 = WeightedChoice();
+            population[i] = WeightedChoice();
+            population[i + 1] = WeightedChoice();
 
             // Mutate
-            bool mutate = Random.Range(0.0f, 1.0f) < (1 / mutationChance);
+            bool mutate = Random.Range(0.0f, 1.0f) < (1 / mutationChance); // TODO inside condition
             if (mutate)
             {
-				var child = new Image(nPixels, target, palette, targetColors);
-                newPopulation.Add(child);
+
+                population[i + 2].SetRandomPixels(palette);
+                population[i + 2].ComputeFitness(targetColors);
             }
             else
             {
                 // Crossover
-                var child = new Image(ind1);
-                child.Crossover(ind2);
-                child.ComputeFitness(targetColors);
-                newPopulation.Add(child);
-            }
+                population[i + 2] = new Image(population[i]);
+                //population[i + 2].CopyColors(population[i]);
 
-            newPopulation.Add(ind1);
-            newPopulation.Add(ind2);
+                population[i + 2].Crossover(population[i + 1]);
+                population[i + 2].ComputeFitness(targetColors);
+            }
         }
 
-        // Update Population
-        population = newPopulation;
     }
 
     private Image WeightedChoice()
