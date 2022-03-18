@@ -169,15 +169,15 @@ public class GameManager : MonoBehaviour
         EndgameCanvas.gameObject.SetActive(true);
         MainLoopCanvas.gameObject.SetActive(false);
 
-        EndgameText.text = IsGameOver || Sucesses == 0 ? "DOMMAGE..." : "F�LICITATION !";
+        EndgameText.text = IsGameOver || Sucesses == 0 ? "DOMMAGE..." : "FÉLICITATION !";
 
         string playAgainText = "Retente ta chance !";
         string text = "";
 
         if (Sucesses > 0)
-            text += "Tu as trouv� " + Sucesses.ToString() + " image" + (Sucesses > 1 ? "s" : "") + (!IsGameOver ? " en " + RoundDuration + "s." : ".");
+            text += "Tu as trouvé " + Sucesses.ToString() + " image" + (Sucesses > 1 ? "s" : "") + (!IsGameOver ? " en " + RoundDuration + "s." : ".");
         else
-            text += "Tu n'as trouv� aucune image... " + (!IsGameOver? playAgainText : "");
+            text += "Tu n'as trouvé aucune image... " + (!IsGameOver? playAgainText : "");
 
         if (IsGameOver)
             text += "/n Tu as fait 3 erreurs. " + playAgainText;
