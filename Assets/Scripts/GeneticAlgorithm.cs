@@ -11,15 +11,18 @@ public class GeneticAlgorithm
 
     int populationSize;
 
-    List<Image> population;
+    List<Image> populationA;
+    List<Image> populationB;
 
     private Image[] pool;
     private int poolCount;
     private int poolSize;
 
     float mutationChance = 100.0f;
-    
+
     public List<Color> palette;
+
+    private bool popA = true;
 
     public GeneticAlgorithm(RenderTexture targetRT, int _populationSize, List<Color> colorPalette)
     {
@@ -67,13 +70,22 @@ public class GeneticAlgorithm
 
     private void CreateRandomPopulation()
     {
-        population = new List<Image>();
+        populationA = new List<Image>();
         for (int i = 0; i < populationSize; i++)
         {
             Image image = new Image(nPixels);
             image.SetRandomPixels(palette);
             image.ComputeFitness(targetColors);
-            population.Add(image);
+            populationA.Add(image);
+        }
+
+        populationB = new List<Image>();
+        for (int i = 0; i < populationSize; i++)
+        {
+            Image image = new Image(nPixels);
+            image.SetRandomPixels(palette);
+            image.ComputeFitness(targetColors);
+            populationB.Add(image);
         }
     }
 
@@ -82,13 +94,28 @@ public class GeneticAlgorithm
         System.Array.Clear(pool, 0, poolCount);
         poolCount = 0;
 
-        foreach (var image in population)
+        if (popA)
         {
-            int n = (int)(image.fitness * 100);
-            for (int i = 0; i < n; i++)
+            foreach (var image in populationA)
             {
-                pool[poolCount] = image;
-                poolCount++;
+                int n = (int)(image.fitness * 100);
+                for (int i = 0; i < n; i++)
+                {
+                    pool[poolCount] = image;
+                    poolCount++;
+                }
+            }
+        }
+        else
+        {
+            foreach (var image in populationB)
+            {
+                int n = (int)(image.fitness * 100);
+                for (int i = 0; i < n; i++)
+                {
+                    pool[poolCount] = image;
+                    poolCount++;
+                }
             }
         }
     }
@@ -97,29 +124,58 @@ public class GeneticAlgorithm
     {
         BuildPool();
 
+        popA = (epoch + 1) % 2 == 0;
+
         //var newPopulation = new List<Image>();
-        for (int i = 0; i + 2 < populationSize; i+=3)
+        for (int i = 0; i + 2 < populationSize; i += 3)
         {
             // Select two random individuals, based on their fitness probabilites
-            population[i] = WeightedChoice();
-            population[i + 1] = WeightedChoice();
+            if (popA)
+            {
+                populationA[i] = WeightedChoice();
+                populationA[i + 1] = WeightedChoice();
+            }
+            else
+            {
+                populationB[i] = WeightedChoice();
+                populationB[i + 1] = WeightedChoice();
+            }
 
             // Mutate
             bool mutate = Random.Range(0.0f, 1.0f) < (1 / mutationChance); // TODO inside condition
             if (mutate)
             {
-
-                population[i + 2].SetRandomPixels(palette);
-                population[i + 2].ComputeFitness(targetColors);
+                if (popA)
+                {
+                    populationA[i + 2].SetRandomPixels(palette);
+                    populationA[i + 2].ComputeFitness(targetColors);
+                }
+                else
+                {
+                    populationB[i + 2].SetRandomPixels(palette);
+                    populationB[i + 2].ComputeFitness(targetColors);
+                }
             }
             else
             {
                 // Crossover
-                population[i + 2] = new Image(population[i]);
-                //population[i + 2].CopyColors(population[i]);
+                if (popA)
+                {
+                    //population[i + 2] = new Image(population[i]);
+                    populationA[i + 2].CopyColors(populationA[i]);
 
-                population[i + 2].Crossover(population[i + 1]);
-                population[i + 2].ComputeFitness(targetColors);
+                    populationA[i + 2].Crossover(populationA[i + 1]);
+                    populationA[i + 2].ComputeFitness(targetColors);
+                }
+                else
+                {
+                    //population[i + 2] = new Image(population[i]);
+                    populationB[i + 2].CopyColors(populationB[i]);
+
+                    populationB[i + 2].Crossover(populationB[i + 1]);
+                    populationB[i + 2].ComputeFitness(targetColors);
+                }
+
             }
         }
 
@@ -137,13 +193,13 @@ public class GeneticAlgorithm
 
     public Image GetBestImage()
     {
-        var best = population[0];
-		foreach (var image in population)
-		{
-			if (image.fitness > best.fitness)
-				best = image;
-		}
+        var best = populationA[0];
+        foreach (var image in populationA)
+        {
+            if (image.fitness > best.fitness)
+                best = image;
+        }
 
-		return best;
+        return best;
     }
 }

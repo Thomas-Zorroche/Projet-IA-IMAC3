@@ -20,8 +20,8 @@ public class Image
     {
         size = parent.size;
         colors = new Color[size];
-        parent.colors.CopyTo(colors, 0);
-        //CopyColors(parent);
+
+        CopyColors(parent);
     }
 
     public void CopyColors(Image parent)
@@ -33,11 +33,11 @@ public class Image
 
     public void SetRandomPixels(List<Color> palette)
     {
-		for (int i = 0; i < size; i++)
-		{
+        for (int i = 0; i < size; i++)
+        {
             int colorId = Random.Range(0, palette.Count);
             colors[i] = palette[colorId];
-		}
+        }
     }
 
     public Color GetPixel(int index)
@@ -45,21 +45,21 @@ public class Image
         return colors[index];
     }
 
-	public Color[] GetColors()
-	{
-		var colorArray = new Color[size];
-		for (int i = 0; i < size; i++)
-			colorArray[i] = colors[i];
-		return colorArray;
-	}
+    public Color[] GetColors()
+    {
+        var colorArray = new Color[size];
+        for (int i = 0; i < size; i++)
+            colorArray[i] = colors[i];
+        return colorArray;
+    }
 
-	public void ComputeFitness(Color[] targetColors)
+    public void ComputeFitness(Color[] targetColors)
     {
         fitness = 0.0f;
         Color targetColor;
         Color currentColor;
-		for (int i = 0; i < size; i++)
-		{
+        for (int i = 0; i < size; i++)
+        {
             targetColor = targetColors[i];
             currentColor = colors[i];
             if (currentColor.r != targetColor.r || currentColor.g != targetColor.g || currentColor.b != targetColor.b)
@@ -70,13 +70,13 @@ public class Image
             {
                 fitness++;
             }
-		}
+        }
 
         fitness = fitness / size;
     }
 
     public void Crossover(Image parent)
-	{
+    {
         int middleIndex = Random.Range(0, size);
         for (int i = middleIndex; i < size; i++)
         {
