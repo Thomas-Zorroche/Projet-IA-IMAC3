@@ -49,6 +49,7 @@ public class GameManager : MonoBehaviour
     public Text GameTimer;
     public Text fitnessText;
     public Text iterationText;
+    public Text ErrorText;
 
     public GameObject ButtonsLayout;
 
@@ -58,12 +59,11 @@ public class GameManager : MonoBehaviour
     public Canvas EndgameCanvas;
 
     public Text SucessesText;
-    public Text ErrorsText;
 
     public Text EndgameText;
 
     [Header("Other Canvas")]
-    public Canvas GACanvas;
+    //public Canvas GACanvas;
     public Canvas MainMenuCanvas;
 
     float chrono;
@@ -169,9 +169,20 @@ public class GameManager : MonoBehaviour
         EndgameCanvas.gameObject.SetActive(true);
         MainLoopCanvas.gameObject.SetActive(false);
 
-        EndgameText.text = IsGameOver ? "Game Over !" : "Time out !";
-        SucessesText.text = "You found " + Sucesses.ToString() + " images";
-        ErrorsText.text = "and made " + Errors.ToString() + " errors";
+        EndgameText.text = IsGameOver || Sucesses == 0 ? "DOMMAGE..." : "F�LICITATION !";
+
+        string playAgainText = "Retente ta chance !";
+        string text = "";
+
+        if (Sucesses > 0)
+            text += "Tu as trouv� " + Sucesses.ToString() + " image" + (Sucesses > 1 ? "s" : "") + (!IsGameOver ? " en " + RoundDuration + "s." : ".");
+        else
+            text += "Tu n'as trouv� aucune image... " + (!IsGameOver? playAgainText : "");
+
+        if (IsGameOver)
+            text += "/n Tu as fait 3 erreurs. " + playAgainText;
+
+        SucessesText.text = text;
 
         SearchField.text = "";
 
@@ -193,13 +204,7 @@ public class GameManager : MonoBehaviour
             bestImage.texture = bestIndividual;
 
             iterationText.text = epoch.ToString();
-            fitnessText.text = "fitness : " + (bestInd.fitness * 100).ToString() + "%";
-
-            if (bestInd.fitness >= 0.65f)
-            {
-                Debug.Log("65 ::::: ");
-                Debug.Log(Time.realtimeSinceStartup - chrono);
-            }
+            fitnessText.text = (bestInd.fitness).ToString("p");
         }
     }
 
@@ -291,7 +296,7 @@ public class GameManager : MonoBehaviour
 
         InitGeneticAlgorithm();
 
-        GACanvas.gameObject.SetActive(true);
+        //GACanvas.gameObject.SetActive(true);
         MainMenuCanvas.gameObject.SetActive(false);
         GeneticAlgorithmIsRunning = true;
 
@@ -355,7 +360,10 @@ public class GameManager : MonoBehaviour
             }
         }
         else
+		{
             Errors++;
+            StartCoroutine(ShowErrorMessage());
+		}
 
         if (Errors >= 3)
             InitEndgameCanvas(true);
@@ -372,6 +380,15 @@ public class GameManager : MonoBehaviour
         ResetGeneticAlgorithm();
 
     }
+    private IEnumerator ShowErrorMessage()
+    {
+        ErrorText.gameObject.SetActive(true);
+
+        yield return new WaitForSeconds(1);
+
+        ErrorText.gameObject.SetActive(false);
+    }
+
 
 
     public Texture2D FilterRenderTexture(RenderTexture rt)
