@@ -1808,10 +1808,10 @@ RectTransform:
   m_Father: {fileID: 2054472106}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 474.37573, y: 84.638855}
-  m_SizeDelta: {x: -948.7497, y: -337.2378}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: -89.28735, y: 53.83673}
+  m_SizeDelta: {x: 178.5766, y: 308.3665}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &570201321
 MonoBehaviour:
@@ -4793,8 +4793,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -282.09998, y: 101.70001}
-  m_SizeDelta: {x: -975.0737, y: -593.1}
+  m_AnchoredPosition: {x: -278.86386, y: 98.796555}
+  m_SizeDelta: {x: -930.6824, y: -552.3473}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1363059823
 MonoBehaviour:
@@ -7659,7 +7659,7 @@ MonoBehaviour:
   MainMenuCanvas: {fileID: 614967331}
   Sucesses: 0
   Errors: 0
-  RoundDuration: 150
+  RoundDuration: 120
   MaxErrorBeforeGameOver: 3
 --- !u!4 &2061627997
 Transform:
