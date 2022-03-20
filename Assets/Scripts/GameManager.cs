@@ -7,6 +7,11 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
+using UnityEngine.Jobs;
+using Unity.Collections;
+using Unity.Burst;
+using Unity.Jobs;
+
 public class GameManager : MonoBehaviour
 {
     [Header("Genetic Algorithm")]
@@ -85,6 +90,21 @@ public class GameManager : MonoBehaviour
     private float RoundStartTime;
     private bool GameOn = false;
 
+    // -----------------------------------------------
+    // -------- GENETIC ALGORITHM
+    // -----------------------------------------------
+    private bool popA = true;
+
+    // -----------------------------------------------
+
+
+    // -----------------------------------------------
+    // -------- MULTI THREADING
+    // -----------------------------------------------
+    JobHandle GAJobHandle;
+    GeneticAlgorithmJob GAJob;
+    // -----------------------------------------------
+
     private void Start()
     {
         SearchField.onValueChanged.AddListener(delegate { OnSearchTextChanged(); });
@@ -130,6 +150,94 @@ public class GameManager : MonoBehaviour
         chrono = 0.0f;
     }
 
+    private struct GeneticAlgorithmJob : IJobParallelFor
+    {
+        public float _fitness;
+        private Color _targetColor;
+        private Color _currentColor;
+
+        public NativeArray<Color> _ColorsA;
+        public NativeArray<Color> _ColorsB;
+
+        public NativeArray<float> _FitnessA;
+        public NativeArray<float> _FitnessB;
+
+        private float ComputeFitness(Color[] srcColors)
+        {
+            float fitness = 0.0f;
+            for (int i = 0; i < nPixels; i++)
+            {
+                if (srcColors[i].r == targetColors[i].r && srcColors[i].g == targetColors[i].g && srcColors[i].b == targetColors[i].b)
+                {
+                    fitness++;
+                }
+            }
+            return fitness / nPixels;
+        }
+        private void Crossover(Color[] srcColors, Color[] parentColors)
+        {
+            int middleIndex = Random.Range(0, nPixels);
+            for (int i = middleIndex; i < nPixels; i++)
+            {
+                srcColors[i] = parentColors[i];
+            }
+        }
+        private void SetRandomPixels(Color[] srcColors)
+        {
+            for (int i = 0; i < nPixels; i++)
+            {
+                srcColors[i] = palette[Random.Range(0, paletteCount)];
+            }
+        }
+
+        public void Execute(int i)
+        {
+            // Select two random individuals, based on their fitness probabilites
+            if (popA)
+            {
+                _ColorsA[i] = _ColorsB[pool[Random.Range(0, poolCount - 1)]];
+                _ColorsA[i + 1] = _ColorsB[pool[Random.Range(0, poolCount - 1)]];
+            }
+            else
+            {
+                _ColorsB[i] = _ColorsA[pool[Random.Range(0, poolCount - 1)]];
+                _ColorsB[i + 1] = _ColorsA[pool[Random.Range(0, poolCount - 1)]];
+            }
+
+            // Mutate
+            bool mutate = Random.Range(0.0f, 1.0f) < (1 / mutationChance); // TODO inside condition
+            if (mutate)
+            {
+                if (popA)
+                {
+                    SetRandomPixels(_ColorsA[i + 2]);
+                    _FitnessA[i + 2] = ComputeFitness(_ColorsA[i + 2]);
+                }
+                else
+                {
+                    SetRandomPixels(ColorsB[i + 2]);
+                    FitnessB[i + 2] = ComputeFitness(ColorsB[i + 2]);
+                }
+            }
+            else
+            {
+                // Crossover
+                if (popA)
+                {
+                    ColorsA[i].CopyTo(ColorsA[i + 2], 0);
+                    Crossover(ColorsA[i + 2], ColorsA[i + 1]);
+                    FitnessA[i + 2] = ComputeFitness(ColorsA[i + 2]);
+                }
+                else
+                {
+                    ColorsB[i].CopyTo(ColorsB[i + 2], 0);
+                    Crossover(ColorsB[i + 2], ColorsB[i + 1]);
+                    FitnessB[i + 2] = ComputeFitness(ColorsB[i + 2]);
+                }
+
+            }
+        }
+    }
 
     void Update()
     {
@@ -139,16 +247,25 @@ public class GameManager : MonoBehaviour
 
         if (GeneticAlgorithmIsRunning)
         {
-            /*		    // Get Best Image
-                        Image bestInd = GA.GetBestImage();
-                        bestTexture.SetPixels(bestInd.GetColors());
-                        bestTexture.Apply();
-                        Graphics.Blit(bestTexture, bestIndividual);
-                        bestImage.texture = bestIndividual;
-                        iterationText.text = epoch.ToString();*/
+            // Build Pool
+            BuildPool();
+            popA = (epoch + 1) % 2 == 0;
 
             // Genetic algorithm step
-            GA.Update(epoch);
+            // 1
+            GAJob = new GeneticAlgorithmJob()
+            {
+/*                vertices = waterVertices,
+                normals = waterNormals,
+                offsetSpeed = waveOffsetSpeed,
+                time = Time.time,
+                scale = waveScale,
+                height = waveHeight*/
+            };
+
+            // 2
+            GAJobHandle = GAJob.Schedule(populationSize, 64);
+
 
             epoch++;
         }
@@ -161,6 +278,43 @@ public class GameManager : MonoBehaviour
             if (timeLeft == 0)
                 InitEndgameCanvas();
 
+        }
+    }
+
+    private void LateUpdate()
+    {
+        // 1
+        GAJobHandle.Complete();
+    }
+
+    private void BuildPool()
+    {
+        System.Array.Clear(pool, 0, poolCount);
+        poolCount = 0;
+
+        if (popA)
+        {
+            for (int imgIdx = 0; imgIdx < populationSize; imgIdx++)
+            {
+                int n = (int)(FitnessA[imgIdx] * poolFactor);
+                for (int i = 0; i < n; i++)
+                {
+                    pool[poolCount] = imgIdx;
+                    poolCount++;
+                }
+            }
+        }
+        else
+        {
+            for (int imgIdx = 0; imgIdx < populationSize; imgIdx++)
+            {
+                int n = (int)(FitnessB[imgIdx] * poolFactor);
+                for (int i = 0; i < n; i++)
+                {
+                    pool[poolCount] = imgIdx;
+                    poolCount++;
+                }
+            }
         }
     }
 

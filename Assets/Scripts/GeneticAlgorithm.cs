@@ -11,9 +11,6 @@ public class GeneticAlgorithm
 
     int populationSize;
 
-    List<Image> populationA;
-    List<Image> populationB;
-
     // -----------------------------------------------
 
     private float[] FitnessA;
@@ -221,23 +218,6 @@ public class GeneticAlgorithm
 
     }
 
-/*    private Color[] WeightedChoice()
-    {
-        if (popA)
-        {
-            return ColorsB[pool[Random.Range(0, poolCount - 1)]];
-        }
-        else
-        {
-            return ColorsA[pool[Random.Range(0, poolCount - 1)]];
-        }
-    }*/
-
-/*    public Image GetBestParent(Image p1, Image p2)
-    {
-        return p1.fitness > p2.fitness ? p1 : p2;
-    }*/
-
     public System.Tuple<Color[], float> GetBestImage()
     {
         var best = FitnessA[0];
@@ -277,7 +257,6 @@ public class GeneticAlgorithm
         }
         return fitness / nPixels;
     }
-
     private void Crossover(Color[] srcColors, Color[] parentColors)
     {
         int middleIndex = Random.Range(0, nPixels);
@@ -286,7 +265,6 @@ public class GeneticAlgorithm
             srcColors[i] = parentColors[i];
         }
     }
-
     private void SetRandomPixels(Color[] srcColors)
     {
         for (int i = 0; i < nPixels; i++)
