@@ -201,14 +201,14 @@ public class GameManager : MonoBehaviour
             // Debug.Log("UPDATE TIMER");
 
             // Get Best Image
-            Image bestInd = GA.GetBestImage();
-            bestTexture.SetPixels(bestInd.GetColors());
+            var bestInd = GA.GetBestImage();
+            bestTexture.SetPixels(bestInd.Item1);
             bestTexture.Apply();
             Graphics.Blit(bestTexture, bestIndividual);
             bestImage.texture = bestIndividual;
 
             iterationText.text = epoch.ToString();
-            fitnessText.text = (bestInd.fitness).ToString("p");
+            fitnessText.text = (bestInd.Item2).ToString("p");
         }
     }
 
