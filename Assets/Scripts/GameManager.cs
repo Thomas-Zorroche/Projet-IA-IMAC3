@@ -51,6 +51,7 @@ public class GameManager : MonoBehaviour
     public InputField SearchField;
 
     public Timer GameTimer;
+    public Text ScoreText;
     public Text fitnessText;
     public Text iterationText;
     public Text ErrorText;
@@ -128,6 +129,8 @@ public class GameManager : MonoBehaviour
         GA = new GeneticAlgorithm(targetIndividual, populationSize, palette, GAComputreShader, mutation);
 
         chrono = 0.0f;
+        ScoreText.text = "Score : 0";
+
     }
 
 
@@ -184,7 +187,9 @@ public class GameManager : MonoBehaviour
             text += "Tu n'as trouvé aucune image... " + (!IsGameOver? playAgainText : "");
 
         if (IsGameOver)
-            text += "/n Tu as fait 3 erreurs. " + playAgainText;
+            text += "$Tu as fait 3 erreurs. " + playAgainText;
+
+        text = text.Replace("$", "\n");
 
         SucessesText.text = text;
 
@@ -355,6 +360,7 @@ public class GameManager : MonoBehaviour
         {
             Sucesses++;
             StartCoroutine(ShowTarget());
+            ScoreText.text = "Score : " + Sucesses.ToString();
 
             SearchField.text = "";
             if (!SearchField.isFocused)
