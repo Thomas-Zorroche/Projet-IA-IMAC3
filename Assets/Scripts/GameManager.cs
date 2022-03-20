@@ -129,7 +129,6 @@ public class GameManager : MonoBehaviour
         GA = new GeneticAlgorithm(targetIndividual, populationSize, palette, GAComputreShader, mutation);
 
         chrono = 0.0f;
-        ScoreText.text = "Score : 0";
 
     }
 
@@ -251,6 +250,7 @@ public class GameManager : MonoBehaviour
 
         Sucesses = 0;
         Errors = 0;
+        ScoreText.text = "Score : 0";
 
         MainLoopCanvas.gameObject.SetActive(true);
         MainMenuCanvas.gameObject.SetActive(false);
