@@ -50,7 +50,7 @@ public class GameManager : MonoBehaviour
 
     public InputField SearchField;
 
-    public Text GameTimer;
+    public Timer GameTimer;
     public Text fitnessText;
     public Text iterationText;
     public Text ErrorText;
@@ -155,10 +155,10 @@ public class GameManager : MonoBehaviour
 
         if (GameOn)
         {
-            int timeLeft = Mathf.FloorToInt(RoundDuration - (Time.realtimeSinceStartup - RoundStartTime));
-            GameTimer.text = timeLeft.ToString();
+            float timeLeft = RoundDuration - (Time.realtimeSinceStartup - RoundStartTime);
+            GameTimer.setTimer(timeLeft, (int)RoundDuration);
 
-            if (timeLeft == 0)
+            if (timeLeft <= 0)
                 InitEndgameCanvas();
 
         }
