@@ -46,7 +46,7 @@ public class GeneticAlgorithm
         palette = colorPalette;
         populationSize = _populationSize;
 
-        poolFactor = 100;
+        poolFactor = 50;
         poolSize = populationSize * poolFactor;
         pool = new int[poolSize];
 

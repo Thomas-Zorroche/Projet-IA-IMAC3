@@ -7636,13 +7636,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   baseImage: {fileID: 2800000, guid: 2eac6298ce9a6f44b8ce11252484d819, type: 3}
   GAComputreShader: {fileID: 7200000, guid: 8dd3db4a95471144da9bfa658c852e04, type: 3}
-  populationSize: 5000
+  populationSize: 10000
   deltaEMax: 45
   maxNumberOfColor: 5
   size: 16
   mutation: 50
   ClusteringSeed: 2222
-  IterationTime: 0.5
+  IterationTime: 0.05
   MainLoopCanvas: {fileID: 2054472105}
   targetImage: {fileID: 1464615912}
   bestImage: {fileID: 1564300965}
