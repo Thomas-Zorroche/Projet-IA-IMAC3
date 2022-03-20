@@ -14,7 +14,6 @@ public class Image
     JobHandle fitnessJobHandle;
     ComputeFitnessJob fitnessJob; 
 
-
     private int size;
 
     public float fitness;
@@ -26,30 +25,11 @@ public class Image
         colors = new Color[size];
     }
 
-    private void OnDestroy()
-    {
-        //colors.Dispose();
-    }
-
-    /*    public Image(Image parent)
-        {
-            size = parent.size;
-            colors = new Color[size];
-            CopyColors(parent);
-        }*/
-
-    public void CopyColors(Image parent)
-    {
-        parent.colors.CopyTo(colors, 0);
-        //NativeArray<Color>.Copy(parent.colors, colors, size);
-    }
-
-    public void SetRandomPixels(List<Color> palette)
+    public void SetRandomPixels(Color[] palette, int paletteCount)
     {
         for (int i = 0; i < size; i++)
         {
-            int colorId = Random.Range(0, palette.Count);
-            colors[i] = palette[colorId];
+            colors[i] = palette[Random.Range(0, paletteCount)];
         }
     }
 
@@ -109,17 +89,9 @@ public class Image
     public void ComputeFitness(Color[] targetColors)
     {
         fitness = 0.0f;
-        Color targetColor;
-        Color currentColor;
         for (int i = 0; i < size; i++)
         {
-            targetColor = targetColors[i];
-            currentColor = colors[i];
-            if (currentColor.r != targetColor.r || currentColor.g != targetColor.g || currentColor.b != targetColor.b)
-            {
-                continue;
-            }
-            else
+            if (colors[i].r == targetColors[i].r && colors[i].g == targetColors[i].g && colors[i].b == targetColors[i].b)
             {
                 fitness++;
             }
