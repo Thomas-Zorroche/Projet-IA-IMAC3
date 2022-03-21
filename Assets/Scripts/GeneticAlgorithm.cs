@@ -248,9 +248,11 @@ public class GeneticAlgorithm
     private float ComputeFitness(Color[] srcColors)
     {
         float fitness = 0.0f;
-        for (int i = 0; i < nPixels; i++)
+        for (int idPixel = 0; idPixel < nPixels; ++idPixel)
         {
-            if (srcColors[i].r == targetColors[i].r && srcColors[i].g == targetColors[i].g && srcColors[i].b == targetColors[i].b)
+            if (srcColors[idPixel].r == targetColors[idPixel].r 
+             && srcColors[idPixel].g == targetColors[idPixel].g 
+             && srcColors[idPixel].b == targetColors[idPixel].b)
             {
                 fitness++;
             }

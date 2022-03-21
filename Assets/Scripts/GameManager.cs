@@ -152,87 +152,124 @@ public class GameManager : MonoBehaviour
 
     private struct GeneticAlgorithmJob : IJobParallelFor
     {
-        public float _fitness;
-        private Color _targetColor;
-        private Color _currentColor;
+        [ReadOnly] private NativeArray<Color> _targetColor;
+        [ReadOnly] public NativeArray<Color> _palette;
+        [ReadOnly] public NativeArray<int> _pool;
 
         public NativeArray<Color> _ColorsA;
         public NativeArray<Color> _ColorsB;
-
         public NativeArray<float> _FitnessA;
         public NativeArray<float> _FitnessB;
 
-        private float ComputeFitness(Color[] srcColors)
+        [ReadOnly] private float _fitness;
+        [ReadOnly] private int _nPixels;
+        [ReadOnly] private int _paletteCount;
+        [ReadOnly] private int _poolCount;
+        [ReadOnly] private bool _popA;
+        [ReadOnly] private float _mutationChance;
+
+        private float ComputeFitness(int srcIndex)
         {
             float fitness = 0.0f;
-            for (int i = 0; i < nPixels; i++)
+            if (_popA)
             {
-                if (srcColors[i].r == targetColors[i].r && srcColors[i].g == targetColors[i].g && srcColors[i].b == targetColors[i].b)
+                for (int i = srcIndex; i < srcIndex + _nPixels; i++)
                 {
-                    fitness++;
+                    if (_ColorsA[i].r == _targetColor[i].r && _ColorsA[i].g == _targetColor[i].g && _ColorsA[i].b == _targetColor[i].b)
+                    {
+                        fitness++;
+                    }
                 }
             }
-            return fitness / nPixels;
-        }
-        private void Crossover(Color[] srcColors, Color[] parentColors)
-        {
-            int middleIndex = Random.Range(0, nPixels);
-            for (int i = middleIndex; i < nPixels; i++)
+            else
             {
-                srcColors[i] = parentColors[i];
+                for (int i = srcIndex; i < srcIndex + _nPixels; i++)
+                {
+                    if (_ColorsB[i].r == _targetColor[i].r && _ColorsB[i].g == _targetColor[i].g && _ColorsB[i].b == _targetColor[i].b)
+                    {
+                        fitness++;
+                    }
+                }
+            }
+            return fitness / _nPixels;
+        }
+        private void Crossover(int srcIndex, int parentIndex)
+        {
+            int middleIndex = Random.Range(0, _nPixels);
+            for (int j = 0; j < _nPixels - middleIndex; j++)
+            {
+                if (_popA)
+                    _ColorsA[srcIndex + j] = _ColorsA[parentIndex + j];
+                else
+                    _ColorsB[srcIndex + j] = _ColorsA[parentIndex + j];
             }
         }
-        private void SetRandomPixels(Color[] srcColors)
+        private void SetRandomPixels(int srcIndex)
         {
-            for (int i = 0; i < nPixels; i++)
+            if (_popA)
             {
-                srcColors[i] = palette[Random.Range(0, paletteCount)];
+                for (int i = srcIndex; i < srcIndex + _nPixels; i++)
+                {
+                    _ColorsA[i] = _palette[Random.Range(0, _paletteCount)];
+                }
             }
+            else
+            {
+                for (int i = srcIndex; i < srcIndex + _nPixels; i++)
+                {
+                    _ColorsB[i] = _palette[Random.Range(0, _paletteCount)];
+                }
+            }
+        }
+
+        private int GetIndex(int individualID)
+        {
+            return individualID * _nPixels;
         }
 
         public void Execute(int i)
         {
             // Select two random individuals, based on their fitness probabilites
-            if (popA)
+            if (_popA)
             {
-                _ColorsA[i] = _ColorsB[pool[Random.Range(0, poolCount - 1)]];
-                _ColorsA[i + 1] = _ColorsB[pool[Random.Range(0, poolCount - 1)]];
+                _ColorsA[i] = _ColorsB[_pool[Random.Range(0, _poolCount - 1)]];
+                _ColorsA[i + 1] = _ColorsB[_pool[Random.Range(0, _poolCount - 1)]];
             }
             else
             {
-                _ColorsB[i] = _ColorsA[pool[Random.Range(0, poolCount - 1)]];
-                _ColorsB[i + 1] = _ColorsA[pool[Random.Range(0, poolCount - 1)]];
+                _ColorsB[i] = _ColorsA[_pool[Random.Range(0, _poolCount - 1)]];
+                _ColorsB[i + 1] = _ColorsA[_pool[Random.Range(0, _poolCount - 1)]];
             }
 
             // Mutate
-            bool mutate = Random.Range(0.0f, 1.0f) < (1 / mutationChance); // TODO inside condition
+            bool mutate = Random.Range(0.0f, 1.0f) < (1 / _mutationChance); // TODO inside condition
             if (mutate)
             {
-                if (popA)
+                if (_popA)
                 {
-                    SetRandomPixels(_ColorsA[i + 2]);
-                    _FitnessA[i + 2] = ComputeFitness(_ColorsA[i + 2]);
+                    SetRandomPixels(GetIndex(i + 2));
+                    _FitnessA[i + 2] = ComputeFitness(GetIndex(i + 2));
                 }
                 else
                 {
-                    SetRandomPixels(ColorsB[i + 2]);
-                    FitnessB[i + 2] = ComputeFitness(ColorsB[i + 2]);
+                    SetRandomPixels(GetIndex(i + 2));
+                    _FitnessB[i + 2] = ComputeFitness(GetIndex(i + 2));
                 }
             }
             else
             {
                 // Crossover
-                if (popA)
+                if (_popA)
                 {
-                    ColorsA[i].CopyTo(ColorsA[i + 2], 0);
-                    Crossover(ColorsA[i + 2], ColorsA[i + 1]);
-                    FitnessA[i + 2] = ComputeFitness(ColorsA[i + 2]);
+                    _ColorsA[i].CopyTo(_ColorsA[i + 2], 0);
+                    Crossover(GetIndex(i + 2), GetIndex(i + 1));
+                    _FitnessA[i + 2] = ComputeFitness(GetIndex(i + 2));
                 }
                 else
                 {
-                    ColorsB[i].CopyTo(ColorsB[i + 2], 0);
-                    Crossover(ColorsB[i + 2], ColorsB[i + 1]);
-                    FitnessB[i + 2] = ComputeFitness(ColorsB[i + 2]);
+                    _ColorsB[i].CopyTo(_ColorsB[i + 2], 0);
+                    Crossover(GetIndex(i + 2), GetIndex(i + 1));
+                    _FitnessB[i + 2] = ComputeFitness(GetIndex(i + 2));
                 }
 
             }
